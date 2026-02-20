@@ -1,4 +1,5 @@
-import { BaseService, HexString, IPayData, ISigner, SignedAction, SignMethod } from '@evvm/evvm-js';
+import { BaseService, SignMethod, SignedAction } from '@evvm/evvm-js';
+import type { HexString, IPayData, ISigner } from '@evvm/evvm-js';
 import { zeroAddress } from 'viem';
 import { IDepositData, IWithdrawData } from '../../types/zkVVM.types.js';
 

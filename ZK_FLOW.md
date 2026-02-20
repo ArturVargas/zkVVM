@@ -1,106 +1,132 @@
-# Noir Circuits and ZK Flow
+# zkVVM: Bearer Note Architecture (Digital Cash)
 
-## Overview of Noir Circuits
-The repository contains several Noir circuits (`main.nr`, `withdraw.nr`, `note_generator.nr`, etc.) designed to manage private deposits, note ownership, and withdrawals.
+## 1. Overview
 
-### Core Logic
-The system relies on computing a generic structured `entry` (or note commitment) to be inserted into a Poseidon Merkle tree.
-The entry calculation is consistent across circuits:
+This document outlines the **Bearer Note** flow for zkVVM. Unlike traditional account-based privacy
+systems (e.g., private balances), this architecture treats assets as **Digital Cash**.
+
+- **No "Accounts":** There is no on-chain mapping of User -> Balance.
+- **The "Note":** Funds are locked in a **Commitment** (hash).
+- **Ownership:** Whoever holds the **Secret Pre-image** of that hash owns the funds.
+- **Transfer:** Physical or encrypted digital handoff of the Secret (off-chain).
+- **Withdrawal:** The holder generates a ZK proof to spend the Note to a fresh address.
+
+---
+
+## 2. The Data Structure (The "Note")
+
+A "Note" consists of three components that exist **only** on the client side (User's browser/local
+storage).
+
+| Variable        | Type              | Description                                    | Visibility                                          |
+| :-------------- | :---------------- | :--------------------------------------------- | :-------------------------------------------------- |
+| **`Secret`**    | `Field` (256-bit) | The password to spend the funds.               | **Strictly Private**                                |
+| **`Nullifier`** | `Field` (256-bit) | A unique random ID to prevent double-spending. | **Private** (Hash is Public)                        |
+| **`Value`**     | `Field` (256-bit) | The amount (e.g., `1000000` for 1 USDC).       | **Public** (in Deposit) / **Private** (in Withdraw) |
+
+### The Commitment (On-Chain Storage)
+
+To deposit funds, we mathematically "wrap" the Note into a Commitment using the Poseidon hash
+function.
+
+$$Commitment = Poseidon([Secret, Nullifier, Value])$$
+
+- **Why Poseidon?** It is a ZK-friendly hash function, making proof generation cheap and fast
+  (unlike SHA-256).
+
+---
+
+## 3. The Workflow
+
+### Step 1: Deposit (Minting)
+
+**Actor:** Depositor **Goal:** Lock funds into a secret code.
+
+1.  **Generate Randomness:**
+    - Client generates a random `Secret` and `Random Nullifier`.
+2.  **Calculate Commitment:**
+    - `const commitment = poseidon([secret, nullifier, value]);`
+3.  **Submit to Blockchain:**
+    - Call `Vault.deposit(commitment)` and send the `Value` (ETH/ERC20).
+4.  **Store Secret:**
+    - **CRITICAL:** The browser must save the `Secret` and `Nullifier`. If these are lost, the funds
+      are burned forever.
+5.  **Chain State:**
+    - The Contract adds `Commitment` to the **Merkle Tree**.
+
+### Step 2: The Transfer (Off-Chain)
+
+**Actor:** Depositor -> Receiver **Goal:** Hand over the cash.
+
+1.  **Mechanism:** The Depositor sends the `Secret` and `Nullifier` to the Receiver.
+2.  **Medium:**
+    - Encrypted Chat (Signal/WhatsApp/Telegram).
+    - QR Code (In person).
+    - Physical Paper ("Check").
+3.  **Privacy:** The blockchain sees **zero activity** during this step.
+
+### Step 3: Withdrawal (Spending)
+
+**Actor:** Receiver **Goal:** Cash out the Note to a clean wallet.
+
+1.  **Input:** Receiver enters `Secret` + `Nullifier` + `Recipient Address`.
+2.  **Generate ZK Proof (Noir):**
+    - **Private Inputs:** `Secret`, `Nullifier`, `Value`, `Merkle Path`.
+    - **Public Inputs:** `Merkle Root`, `Nullifier Hash`, `Recipient Address`.
+3.  **The Circuit Proves:**
+    - "I know a `Secret` that hashes to a `Commitment` inside the Merkle Tree Root."
+    - "The `Nullifier Hash` matches the `Nullifier` in the Commitment."
+    - "I am authorizing the withdrawal **ONLY** to this `Recipient Address`."
+4.  **Submit to Blockchain:**
+    - Relayer (Fisher) submits the proof.
+    - Contract verifies proof.
+    - Contract checks `Nullifier Hash` is unused.
+    - Contract transfers funds to `Recipient`.
+    - Contract marks `Nullifier Hash` as **Spent**.
+
+---
+
+## 4. Noir Circuit Logic (`main.nr`)
+
+The circuit ensures the integrity of the withdrawal without revealing the secret.
+
 ```rust
-fn compute_entry(value: Field, holder: Field, random: Field, nullifier: Field) -> Field {
-    poseidon2([poseidon2([value, holder]), poseidon2([random, nullifier])])
+use dep::std;
+
+fn main(
+    // PUBLIC INPUTS (Visible to Verifier/Contract)
+    root: pub Field,             // The current Merkle Root of the tree
+    nullifierHash: pub Field,    // The public identifier of the spent note
+    recipient: pub Field,        // The address receiving the funds (prevents front-running)
+    value: pub Field,            // The amount being withdrawn (must match deposit)
+
+    // PRIVATE INPUTS (Hidden Witness)
+    secret: Field,               // The secret key
+    nullifier: Field,            // The unique nonce
+    path_indices: [Field; 20],   // Merkle path directions (0=Left, 1=Right)
+    path_siblings: [Field; 20]   // Merkle path sibling hashes
+) {
+    // 1. Reconstruct the Commitment
+    // We hash the private inputs to see if they match the commitment in the tree.
+    let commitment = std::hash::poseidon::bn254::hash_3([secret, nullifier, value]);
+
+    // 2. Verify Merkle Membership
+    // We calculate the root from our commitment up the tree path.
+    let calculated_root = std::merkle::compute_merkle_root(commitment, path_indices, path_siblings);
+
+    // CONSTRAINT: The calculated root must match the public root.
+    assert(calculated_root == root);
+
+    // 3. Verify Nullifier Validity
+    // We hash the private nullifier to check against the public nullifierHash.
+    let calculated_nullifier_hash = std::hash::poseidon::bn254::hash_1([nullifier]);
+
+    // CONSTRAINT: The hash must match.
+    assert(calculated_nullifier_hash == nullifierHash);
+
+    // 4. Recipient Binding (Implicit)
+    // The 'recipient' is a Public Input.
+    // The Smart Contract will ensure msg.sender (or target) == recipient.
+    // If someone changes the recipient, the proof is invalid because inputs changed.
 }
 ```
-Where:
-- `value`: The amount of tokens deposited.
-- `holder` (or `pk_b`): The wallet address of the recipient receiving the note.
-- `random`: A secret entropy source.
-- `nullifier`: A deterministic, unique identifier for the note, computed as `poseidon2([random, pk_b])`.
-
-### Circuit: `withdraw.nr` / `main.nr`
-This is the primary circuit to prove ownership of a note and bind a withdrawal to a recipient.
-**Public Inputs:**
-- `nullifier`: Ensures a note cannot be spent twice.
-- `merkle_proof_length`: The length of the Merkle path.
-- `expected_merkle_root`: The recorded on-chain state root of the tree.
-- `recipient`: The destination address to withdraw funds to (protects against front-running).
-- `commitment`: Evaluated as `poseidon2([value, nullifier])`, allowing the contract to check the value decrypted from a ciphertext without revealing it to the public in the proof.
-
-**Private Inputs:**
-- `value`: The amount of the withdrawal.
-- `pk_b`: The owner's public identifier (wallet address).
-- `random`: The secret entropy.
-- `merkle_proof_indices`, `merkle_proof_siblings`: Allow the circuit to verify that `entry` is included in the state root.
-
----
-
-## Potential Pitfalls & Vulnerabilities
-There are a few **critical** pitfalls and security considerations with the current approach:
-
-1. **Weak Entropy (`random`)**:
-   In `note_generator.nr`, the `random` value is documented as `timestamp (seconds)`. This provides virtually zero entropy. Since both `value` and the recipient's wallet address (`pk_b`) are likely known or easily guessable public information from standard blockchain transactions, an attacker or blockchain observer could trivially brute-force the deposit's timestamp to find the `random` value. This means an attacker can construct a valid `nullifier`, create a proof, and steal the funds.
-   *Fix*: `random` should be a cryptographically secure random 256-bit scalar, ideally derived from a strong local source, not a timestamp.
-
-2. **Depositor Keeping Entropy**: 
-   Because `random` and `pk_b` determine the `nullifier` and essentially establish complete mathematical ownership over the note, the party that creates the note (the depositor) inherently knows all the secrets required to withdraw it. Without standard asymmetric cryptography (i.e., using the recipient's public key to encrypt the note payload in a way that strictly requires their private key to spend), a malicious depositor can front-run the recipient and withdraw the funds they just sent. 
-   *Fix*: Standardize a flow where the note's nullifier and entropy are bound to a public key (or secret derived via a shared DH key) exclusively manageable by the recipient. Alternatively, ensure the depositor guarantees securely sharing the secret off-chain and destroying their copy (though less trustless).
-
----
-
-## Deposit & Withdrawal Creation
-
-### 1. Creating the Commitment for a Deposit
-To create a deposit, you do not need to generate a zero-knowledge proof. You only need to calculate the note elements off-chain (typically in the frontend/SDK via `noir_js` or a native poseidon hash implementation).
-
-```javascript
-// Example computation flow off-chain
-const pk_b = recipient_wallet_address_as_field;
-const value = token_amount_as_field;
-
-// CRITICAL: use a secure random field here, ideally NOT Date.now() / 1000.
-const random = secure_random_256bit_field;
-
-// Compute Nullifier
-const nullifier = poseidon2([random, pk_b]);
-
-// Compute Commitment used for ciphertext verification
-const commitment = poseidon2([value, nullifier]);
-
-// Compute Entry (The leaf commitment to insert into the Merkle Tree on-chain)
-const entry = poseidon2([
-   poseidon2([value, pk_b]),
-   poseidon2([random, nullifier])
-]);
-```
-The contract consumes `entry` and inserts it as a new leaf in the Merkle Tree. You would supply `entry`, along with encrypted data containing `random` and `value` for the recipient.
-
-### 2. Creating the Proof & Public Inputs for a Withdrawal
-To withdraw, the actual owner must construct the Merkle inclusion proof for their `entry` up to the current `expected_merkle_root` and supply this to the `withdraw.nr` circuit.
-
-**Setup Inputs for the Prover:**
-```javascript
-// Public inputs required by the contract
-const publicInputs = {
-    nullifier: nullifier,
-    merkle_proof_length: treeDepth, // e.g. 10
-    expected_merkle_root: currentOnchainRoot,
-    recipient: withdrawal_destination_address,
-    commitment: commitment, // poseidon2([value, nullifier])
-};
-
-// Private inputs kept hidden by zk-SNARK
-const privateInputs = {
-    value: token_amount,
-    pk_b: your_wallet_address,
-    random: secret_entropy_used_in_deposit,
-    merkle_proof_indices: treeProof.indices, // array of 0s and 1s
-    merkle_proof_siblings: treeProof.siblings, // array of sibling hashes
-};
-
-// Combine for Noir witness generation
-const input = { ...publicInputs, ...privateInputs };
-```
-
-**Generate Proof:**
-Use `@noir-lang/noir_js` (or Native Barretenberg) to evaluate the `input` against the compiled `withdraw` circuit. 
-This yields a byte-array `proof`. Submit both this `proof` and the formatted `publicInputs` array directly to the smart contract's withdrawal function. Wait for successful L1 verification.

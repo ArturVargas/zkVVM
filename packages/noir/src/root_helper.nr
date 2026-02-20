@@ -28,3 +28,23 @@ fn calc_root(
         merkle_proof_siblings,
     )
 }
+
+fn main(
+    value: Field,
+    from: Field,
+    random: Field,
+    nullifier_in: Field,
+    merkle_proof_length: u32,
+    merkle_proof_indices: [u1; MAX_DEPTH],
+    merkle_proof_siblings: [Field; MAX_DEPTH],
+) -> pub Field {
+    calc_root(
+        value,
+        from,
+        random,
+        nullifier_in,
+        merkle_proof_length,
+        merkle_proof_indices,
+        merkle_proof_siblings,
+    )
+}
