@@ -49,7 +49,7 @@ task('deploy', 'Deploys a verifier contract')
   .addOptionalPositionalParam('provingSystem')
   .setAction(async (taskArgs, hre) => {
     const contractsDir = resolve('packages', 'contracts');
-    if (fs.existsSync(contractsDir)) fs.rmdirSync(contractsDir, { recursive: true });
+    // if (fs.existsSync(contractsDir)) fs.rmdirSync(contractsDir, { recursive: true });
 
     hre.config.noirenberg = { provingSystem: taskArgs.provingSystem || 'UltraPlonk' };
     await hre.run('compile');
