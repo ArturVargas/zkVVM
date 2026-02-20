@@ -128,24 +128,37 @@ export function DepositTest() {
         autoClose: 3000,
       });
 
-      // Build 5 publicInputs in withdrawV2b contract order:
-      // [nullifier, merkle_proof_length, expected_merkle_root, recipient, commitment]
-      const pad32 = (v: bigint) => ('0x' + v.toString(16).padStart(64, '0')) as `0x${string}`;
-      const publicInputs: `0x${string}`[] = [
-        note.nullifier as `0x${string}`,
-        pad32(BigInt(note.merkle_proof_length)),
-        note.expected_merkle_root as `0x${string}`,
-        recipientPadded,
-        note.commitment as `0x${string}`,
-      ];
+      // Contract expects 5 public inputs: [nullifier, merkle_proof_length, expected_merkle_root, recipient, commitment]
+      // bb.js may omit the u32 (merkle_proof_length), returning only 4 Field inputs.
+      // If bb.js returns 4, re-insert merkle_proof_length at index 1.
+      const proofPublicInputs = proofData.publicInputs as `0x${string}`[];
+      let publicInputs: `0x${string}`[];
+      if (proofPublicInputs.length === 4) {
+        const merkleProofLengthHex = `0x${BigInt(note.merkle_proof_length).toString(16).padStart(64, '0')}` as `0x${string}`;
+        publicInputs = [
+          proofPublicInputs[0], // nullifier
+          merkleProofLengthHex, // merkle_proof_length (re-inserted)
+          proofPublicInputs[1], // expected_merkle_root
+          proofPublicInputs[2], // recipient
+          proofPublicInputs[3], // commitment
+        ];
+      } else {
+        publicInputs = [...proofPublicInputs];
+      }
+      console.log('[withdrawV2b] bb.js returned', proofPublicInputs.length, 'public inputs, sending', publicInputs.length);
+      console.log('[withdrawV2b] publicInputs:', publicInputs);
+      console.log('[withdrawV2b] proof bytes length:', proofData.proof.length);
 
-      // Generate ciphertext: encrypt amount using key derived from nullifier + recipient + POOL_SALT
+      // Contract order: [nullifier(0), merkle_proof_length(1), expected_merkle_root(2), recipient(3), commitment(4)]
+      const nullifierHex = publicInputs[0];
+      const recipientHex = publicInputs[3];
       const POOL_SALT = keccak256(encodePacked(['string'], ['ShieldedPool.v2b']));
       const key = keccak256(encodePacked(
         ['bytes32', 'bytes32', 'bytes32'],
-        [note.nullifier as `0x${string}`, recipientPadded, POOL_SALT],
+        [nullifierHex, recipientHex, POOL_SALT],
       ));
       const stream = keccak256(encodePacked(['bytes32', 'uint256'], [key, 0n]));
+      const pad32 = (v: bigint) => ('0x' + v.toString(16).padStart(64, '0')) as `0x${string}`;
       const ciphertext = pad32(BigInt(note.value) ^ BigInt(stream));
 
       const proofHex = bytesToHex(proofData.proof);

@@ -30,11 +30,12 @@ async function getNoteGeneratorNoir(): Promise<Noir> {
   return noteGeneratorNoir;
 }
 
-function fieldToHex(v: unknown): string {
-  if (typeof v === 'string' && v.startsWith('0x')) return v;
-  if (typeof v === 'bigint') return '0x' + v.toString(16).padStart(64, '0');
-  if (typeof v === 'number') return '0x' + BigInt(v).toString(16).padStart(64, '0');
-  return String(v);
+function fieldToHex(v: unknown): `0x${string}` {
+  if (typeof v === 'string' && v.startsWith('0x'))
+    return `0x${v.slice(2).padStart(64, '0')}`;
+  if (typeof v === 'bigint') return `0x${v.toString(16).padStart(64, '0')}`;
+  if (typeof v === 'number') return `0x${BigInt(v).toString(16).padStart(64, '0')}`;
+  return `0x${BigInt(String(v)).toString(16).padStart(64, '0')}`;
 }
 
 /**
