@@ -1,0 +1,133 @@
+.top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    display: flex;
+    align-items: center;
+    background: rgba(13, 15, 18, 0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--panel-border);
+    z-index: 100;
+}
+
+.nav-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 32px;
+}
+
+.nav-link {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+    position: relative;
+}
+
+.nav-link:hover {
+    color: var(--text-primary);
+}
+
+.nav-link.active {
+    color: var(--text-primary);
+}
+
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+}
+
+.wallet-btn {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 32px;
+    padding: 6px 16px 6px 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+}
+
+.wallet-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.wallet-avatar {
+    background: var(--accent-color);
+    color: #000;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    position: relative;
+}
+
+.wallet-avatar.disconnected {
+    background: #333;
+}
+
+.wallet-avatar::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    background: #00ffaa;
+    border-radius: 50%;
+    border: 2px solid var(--bg-color);
+}
+
+.wallet-avatar.disconnected::after {
+    background: #ff5555;
+}
+
+.wallet-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.wallet-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.wallet-address {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: monospace;
+}

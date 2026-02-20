@@ -1,0 +1,78 @@
+import React, { useState } from 'react';
+import './DashboardPage.css';
+
+export function DashboardPage() {
+    const [asset, setAsset] = useState('MATE');
+    const [amount, setAmount] = useState('100.00');
+
+    const handleMint = (e: React.FormEvent) => {
+        e.preventDefault();
+        console.log('Minting', amount, asset);
+    };
+
+    return (
+        <div className="dashboard-container page-container">
+            <div className="glass-panel deposit-card">
+                <div className="deposit-header flex-between">
+                    <div>
+                        <h2>DEPOSIT</h2>
+                        <p>Mint a new anonymous bearer note.</p>
+                    </div>
+                    <div className="plus-icon">+</div>
+                </div>
+
+                <form className="deposit-form" onSubmit={handleMint}>
+                    <div className="form-group-row">
+                        <div className="input-group">
+                            <label>ASSET</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                value={asset}
+                                onChange={(e) => setAsset(e.target.value)}
+                            />
+                        </div>
+                        <div className="input-group">
+                            <label>AMOUNT</label>
+                            <input
+                                type="text"
+                                className="input-field amount-input"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <button type="submit" className="btn-primary submit-btn">
+                        MINT BEARER NOTE ⚡
+                    </button>
+                </form>
+            </div>
+
+            <div className="vault-section">
+                <div className="vault-header flex-between">
+                    <h3>YOUR LOCAL VAULT</h3>
+                    <span className="vault-subtitle">&#10003; KEYS STORED IN BROWSER SESSION</span>
+                </div>
+
+                <div className="vault-table glass-panel">
+                    <div className="table-row table-header">
+                        <div>DATE</div>
+                        <div>VALUE</div>
+                        <div className="align-right">SECRET CODE</div>
+                    </div>
+                    <div className="table-row">
+                        <div className="text-secondary">Oct 12</div>
+                        <div><strong>500</strong> <span className="text-secondary">USDC</span></div>
+                        <div className="align-right"><button className="btn-icon copy-btn">&#128190; COPY KEY</button></div>
+                    </div>
+                    <div className="table-row">
+                        <div className="text-secondary">Oct 14</div>
+                        <div><strong>100</strong> <span className="text-secondary">USDC</span></div>
+                        <div className="align-right"><button className="btn-icon copy-btn">&#128190; COPY KEY</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

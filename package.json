@@ -7,8 +7,8 @@
   ],
   "scripts": {
     "deploy": "bunx hardhat deploy --config hardhat.config.cts",
-    "dev": "bun --filter vite dev",
-    "start": "concurrently \"bun run node\" \"sleep 5 && bun run deploy && bun run dev\"",
+    "vite:dev": "bun --filter vite dev",
+    "dev": "bun run deploy && bun run vite:dev",
     "test:up": "bun test ./tests/up.test.ts",
     "test:uh": "bun test ./tests/uh.test.ts",
     "test": "bun test:up && bun test:uh",
@@ -49,3 +49,4 @@
     "viem": "^2.46.2"
   }
 }
+

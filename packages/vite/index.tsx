@@ -12,12 +12,18 @@ import ReactDOM from 'react-dom/client';
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
-import Component from './components/index.jsx';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Layout } from './components/Layout.js';
+import { LandingPage } from './pages/LandingPage.js';
+import { DashboardPage } from './pages/DashboardPage.js';
+import { WithdrawPage } from './pages/WithdrawPage.js';
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider, createConfig, http } from 'wagmi';
 import { defineChain, createClient } from 'viem';
 import { injected } from 'wagmi/connectors';
-import { networkConfig } from '../../deployment.json';
+import deployment from '../../deployment.json' with { type: 'json' };
+const { networkConfig } = deployment;
 
 const queryClient = new QueryClient();
 
@@ -49,7 +55,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <Providers>
-    <Component />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<LandingPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="withdraw" element={<WithdrawPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
     <ToastContainer />
   </Providers>,
 );
