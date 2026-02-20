@@ -72,6 +72,7 @@ export class zkVVM extends BaseService {
 
     const signature = await this.signer.signMessage(message);
 
+    // todo: add recipient
     return new SignedAction(this, evvmId, functionName, {
       user: this.signer.address,
       proof,

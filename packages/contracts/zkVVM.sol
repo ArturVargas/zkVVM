@@ -10,15 +10,18 @@ contract zkVVM is EvvmService {
     mapping(bytes32 => bool) public merkleRoots;
     mapping(bytes32 => bool) public nullifiers;
 
+    address public admin;
+
     IVerifier public immutable withdrawVerifier;
 
     constructor(
-        // address _owner,
+        address _admin,
         address _coreAddress,
         address _stakingAddress,
         address _withdrawVerifierAddress
     ) EvvmService(_coreAddress, _stakingAddress) {
         withdrawVerifier = IVerifier(_withdrawVerifierAddress);
+        admin = _admin;
     }
 
     // we will need two main functions:
@@ -100,5 +103,10 @@ contract zkVVM is EvvmService {
         makeCaPay(user, getPrincipalTokenAddress(), amount);
     }
 
-    function registerRoot(bytes32 root) external {}
+    function registerRoot(bytes32 root) external {
+        require(!merkleRoots[root], 'Root already known');
+        require(msg.sender == admin, 'Only admin can call this method');
+
+        merkleRoots[root] = true;
+    }
 }
