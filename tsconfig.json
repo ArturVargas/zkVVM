@@ -4,7 +4,11 @@
     "emitDecoratorMetadata": true,
     "target": "es2022",
     "useDefineForClassFields": true,
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -12,7 +16,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "NodeNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -25,7 +29,15 @@
     "experimentalResolver": true,
     "files": true
   },
-  "exclude": ["dist", "node_modules"],
-  "include": ["packages", "./tests"],
-  "files": ["hardhat.config.cts"]
+  "exclude": [
+    "dist",
+    "node_modules"
+  ],
+  "include": [
+    "packages",
+    "./tests"
+  ],
+  "files": [
+    "hardhat.config.cts"
+  ]
 }
