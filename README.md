@@ -4,44 +4,6 @@ A privacy-preserving **Shielded Pool** protocol built with [Noir](https://noir-l
 
 ## Architecture
 
-```mermaid
-graph TB
-    subgraph Frontend ["Frontend (packages/vite)"]
-        UI[React UI]
-        Hooks[Wagmi Hooks]
-        ProofGen[Proof Generation]
-    end
-
-    subgraph Circuits ["ZK Circuits (packages/noir)"]
-        Main[main.nr<br/>Transfer Circuit]
-        Withdraw[withdraw.nr<br/>Withdraw Circuit]
-        Helpers[nullifier_helper.nr<br/>root_helper.nr]
-    end
-
-    subgraph Contracts ["Smart Contracts (packages/contracts)"]
-        Pool[ShieldedPool.sol]
-        UV[UltraVerifier.sol]
-        IVer[IVerifier.sol]
-    end
-
-    subgraph Libs ["Crypto Libraries"]
-        Poseidon[Poseidon2]
-        Merkle[Binary Merkle Tree]
-        Edwards[Baby Jubjub]
-    end
-
-    UI --> Hooks
-    Hooks --> ProofGen
-    ProofGen --> Main
-    ProofGen --> Withdraw
-    Main --> Libs
-    Withdraw --> Libs
-    Helpers --> Libs
-    Hooks -->|"tx"| Pool
-    Pool -->|"verify"| UV
-    UV -.-> IVer
-```
-
 ```text
 zkVVM/
 ├── packages/
@@ -71,18 +33,6 @@ zkVVM/
 ```
 
 ## Stack
-
-```mermaid
-block-beta
-    columns 3
-    A["ZK Circuits<br/>Noir | ACVM"]:3
-    B["Proving Systems<br/>UltraPlonk | UltraHonk<br/>(@aztec/bb.js)"]:3
-    C["Cryptography<br/>Poseidon2 | Baby Jubjub | Keccak256 | Merkle Trees"]:3
-    D["Smart Contracts<br/>Solidity 0.8.28 | Hardhat"]:2
-    E["Frontend<br/>React | Vite"]:1
-    F["Blockchain<br/>Wagmi | Viem"]:2
-    G["Runtime<br/>Bun"]:1
-```
 
 | Layer | Technology |
 | ----- | ---------- |
@@ -117,38 +67,7 @@ graph LR
     style N fill:#f59e0b,color:#fff
 ```
 
-```text
-entry = poseidon2(poseidon2([value, holder_id]), poseidon2([random, nullifier]))
-where nullifier = poseidon2([random, holder_id])
-```
-
 ### Circuits
-
-```mermaid
-graph TB
-    subgraph Transfer ["main.nr — Transfer Circuit"]
-        direction LR
-        T_Priv["Private Inputs<br/>pk_a, pk_b, random_in,<br/>random_out, nullifier_in,<br/>merkle_proof"]
-        T_Pub["Public Inputs<br/>newCommitment<br/>nullifier<br/>merkleProofLength<br/>expectedRoot"]
-        T_Priv --> T_Verify{{"Verify ownership<br/>+ merkle inclusion"}}
-        T_Verify --> T_Pub
-    end
-
-    subgraph WithdrawC ["withdraw.nr — Withdraw Circuit"]
-        direction LR
-        W_Priv["Private Inputs<br/>pk_b, random,<br/>merkle_proof"]
-        W_Pub["Public Inputs<br/>value, nullifier<br/>merkleProofLength<br/>expectedRoot<br/>recipient"]
-        W_Priv --> W_Verify{{"Verify ownership<br/>+ bind recipient"}}
-        W_Verify --> W_Pub
-    end
-
-    subgraph HelperC ["Helpers"]
-        NH["nullifier_helper.nr<br/>Compute nullifier + root"]
-        RH["root_helper.nr<br/>Compute merkle root"]
-    end
-
-    HelperC -.->|"feeds inputs"| WithdrawC
-```
 
 | Circuit | Purpose | Public Inputs |
 | ------- | ------- | ------------- |
@@ -168,73 +87,33 @@ sequenceDiagram
     participant Verifier as UltraVerifier
 
     rect rgb(59, 130, 246, 0.1)
-        Note over User,Pool: Deposit Flow
-        User->>Frontend: Input commitment + amount
+        Note over User,Pool: Deposit
+        User->>Frontend: commitment + amount
         Frontend->>Pool: deposit(commitment, amount)
-        Pool->>Pool: Store commitment<br/>Mark as used
         Pool-->>Frontend: Deposit event
     end
 
     rect rgb(16, 185, 129, 0.1)
-        Note over User,Verifier: Withdraw Flow
-        User->>Frontend: Input value, recipient, secret
-        Frontend->>Noir: Generate ZK proof<br/>(withdraw.nr)
+        Note over User,Verifier: Withdraw
+        User->>Noir: private inputs
         Noir-->>Frontend: proof + publicInputs
         Frontend->>Pool: withdraw(proof, publicInputs)
         Pool->>Verifier: verify(proof, publicInputs)
-        Verifier-->>Pool: valid
-        Pool->>Pool: Mark nullifier spent
-        Pool-->>User: Funds to recipient
+        Pool->>Pool: nullifier marked spent
+        Pool-->>User: funds to recipient
     end
 
     rect rgb(245, 158, 11, 0.1)
-        Note over User,Verifier: Transfer Flow
-        User->>Frontend: Input transfer details
-        Frontend->>Noir: Generate ZK proof<br/>(main.nr)
+        Note over User,Verifier: Transfer
+        User->>Noir: private inputs
         Noir-->>Frontend: proof + publicInputs
-        Frontend->>Pool: transferIntent(root, nullifier, newCommitment, proof)
+        Frontend->>Pool: transferIntent(...)
         Pool->>Verifier: verify(proof, publicInputs)
-        Verifier-->>Pool: valid
-        Pool->>Pool: Mark nullifier spent<br/>Emit new commitment
+        Pool->>Pool: nullifier spent, new commitment emitted
     end
 ```
 
 ### ShieldedPool Contract
-
-```mermaid
-graph LR
-    subgraph Entrypoints
-        D["deposit()"]
-        T["transferIntent()"]
-        W["withdraw()"]
-        R["registerRoot()"]
-    end
-
-    subgraph State
-        Commits["usedCommitments<br/>(mapping)"]
-        Nulls["nullifiers<br/>(mapping)"]
-        Roots["isKnownRoot<br/>(mapping)"]
-    end
-
-    subgraph Security
-        Reentrancy["ReentrancyGuard"]
-        NullCheck["Nullifier<br/>double-spend check"]
-        RootCheck["Known root<br/>validation"]
-        RecipientBind["Recipient<br/>binding in proof"]
-    end
-
-    D --> Commits
-    T --> Nulls
-    T --> Roots
-    W --> Nulls
-    W --> Roots
-    R --> Roots
-
-    Nulls --> NullCheck
-    Roots --> RootCheck
-    W --> RecipientBind
-    D & T & W --> Reentrancy
-```
 
 - **`deposit(commitment, amount)`** — Store a commitment, emit Deposit event
 - **`transferIntent(root, nullifier, ..., proof)`** — Private note transfer, verified on-chain
