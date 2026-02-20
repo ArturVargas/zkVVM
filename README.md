@@ -1,6 +1,10 @@
 # zkVVM
 
-A privacy-preserving **Shielded Pool** protocol built with [Noir](https://noir-lang.org/) zero-knowledge circuits, [Solidity](https://soliditylang.org/) smart contracts, and a [React](https://react.dev/) + [Vite](https://vite.dev/) frontend. Users can deposit tokens into the pool and withdraw to any address without revealing the link between depositor and recipient.
+**Privacy for users, transparency for institutions.**
+
+A privacy-preserving **Shielded Pool** protocol built with [Noir](https://noir-lang.org/) zero-knowledge circuits, [Solidity](https://soliditylang.org/) smart contracts, and a [React](https://react.dev/) + [Vite](https://vite.dev/) frontend. Each institution deploys its own zkVVM instance via [EVVM](https://github.com/EVVM-org) — inter-institutional flows are transparent and auditable, while individual user transactions remain private through ZK proofs.
+
+> See [PITCH.md](PITCH.md) for the full vision and narrative.
 
 ## Architecture
 
@@ -8,7 +12,8 @@ A privacy-preserving **Shielded Pool** protocol built with [Noir](https://noir-l
 zkVVM/
 ├── packages/
 │   ├── contracts/                # Solidity smart contracts
-│   │   ├── ShieldedPool.sol      # Core privacy pool (deposit, transfer, withdraw)
+│   │   ├── ShieldedPool.sol      # Standalone privacy pool (deposit, transfer, withdraw, withdrawV2b)
+│   │   ├── zkVVM.sol             # EVVM-integrated pool (gasless meta-tx deposits & withdrawals)
 │   │   ├── IVerifier.sol         # Proof verification interface
 │   │   ├── UltraVerifier.sol     # Auto-generated UltraPlonk verifier
 │   │   ├── MockERC20.sol         # Test token
@@ -16,18 +21,28 @@ zkVVM/
 │   │
 │   ├── noir/                     # Noir ZK circuits
 │   │   ├── src/
-│   │   │   ├── main.nr           # Transfer/intent circuit
-│   │   │   ├── withdraw.nr       # Withdrawal circuit
+│   │   │   ├── main.nr           # Withdraw v2b circuit (value-private withdrawal)
+│   │   │   ├── withdraw.nr       # Withdraw v2b circuit (recipient-bound)
+│   │   │   ├── note_generator.nr # Note generation (nullifier, commitment, entry, root)
+│   │   │   ├── commitment_helper.nr # Compute commitment = H(value, nullifier)
 │   │   │   ├── nullifier_helper.nr
 │   │   │   └── root_helper.nr
-│   │   ├── scripts/              # Deposit, compute, and compile scripts
+│   │   ├── scripts/              # Deposit, compute, nullifier, and compile scripts
 │   │   └── libs/                 # Poseidon, Edwards, Merkle tree libraries
 │   │
 │   └── vite/                     # React frontend
 │       ├── components/           # Deposit UI
-│       └── hooks/                # Proof generation & verification hooks
+│       ├── hooks/                # Proof generation & verification hooks
+│       ├── lib/
+│       │   ├── note.ts           # Note generation via Noir circuit (noir_js)
+│       │   ├── usdc.ts           # USDC amount parsing (6 decimals)
+│       │   └── services/
+│       │       └── zkVVM.ts      # EVVM service (signed deposit & withdraw actions)
+│       └── types/
+│           └── zkVVM.types.ts    # TypeScript interfaces for EVVM actions
 │
 ├── tests/                        # Integration & proving system tests
+├── scripts/                      # Utility scripts (ciphertext generation)
 ├── hardhat.config.cts            # Contract deployment & network config
 └── package.json                  # Monorepo workspace root
 ```
@@ -38,8 +53,9 @@ zkVVM/
 | ----- | ---------- |
 | ZK Circuits | Noir, ACVM |
 | Proving Systems | UltraPlonk, UltraHonk (@aztec/bb.js) |
-| Cryptography | Poseidon2, Baby Jubjub (Edwards), Keccak256, Binary Merkle Trees |
-| Smart Contracts | Solidity 0.8.28, Hardhat |
+| Cryptography | Poseidon2, Keccak256, Binary Merkle Trees |
+| Smart Contracts | Solidity 0.8.x, Hardhat |
+| Meta-Transactions | EVVM (@evvm/evvm-js, @evvm/testnet-contracts) |
 | Frontend | React, TypeScript, Vite |
 | Blockchain | Wagmi, Viem |
 | Runtime | Bun |
@@ -54,26 +70,31 @@ Every deposit creates a **note** — a Poseidon2 hash commitment:
 graph LR
     subgraph Inputs
         V[value]
-        H[holder_id]
+        H[holder / pk_b]
         R[random]
     end
 
-    V & H --> P1["poseidon2([value, holder_id])"]
-    R & H --> N["nullifier = poseidon2([random, holder_id])"]
+    V & H --> P1["poseidon2([value, holder])"]
+    R & H --> N["nullifier = poseidon2([random, pk_b])"]
     R & N --> P2["poseidon2([random, nullifier])"]
     P1 & P2 --> Entry["entry (commitment)"]
+    V & N --> C["commitment = poseidon2([value, nullifier])"]
 
     style Entry fill:#10b981,color:#fff
     style N fill:#f59e0b,color:#fff
+    style C fill:#6366f1,color:#fff
 ```
+
+The `note_generator.nr` circuit computes `(nullifier, commitment, entry, root)` from `(value, pk_b, random)` and is used by the frontend via `noir_js.execute()` to generate notes client-side.
 
 ### Circuits
 
 | Circuit | Purpose | Public Inputs |
 | ------- | ------- | ------------- |
-| `main.nr` | Private note-to-note transfers | newCommitment, nullifier, merkleProofLength, expectedRoot |
-| `withdraw.nr` | Withdraw to a specific recipient | value, nullifier, merkleProofLength, expectedRoot, recipient |
-| `nullifier_helper.nr` | Compute nullifier + root from a note value | (helper) |
+| `main.nr` / `withdraw.nr` | Withdraw v2b — prove note ownership, bind to recipient | nullifier, merkle_proof_length, expected_root, recipient, commitment |
+| `note_generator.nr` | Generate note data (nullifier, commitment, entry, root) | (executed client-side via noir_js) |
+| `commitment_helper.nr` | Compute `commitment = H(value, nullifier)` | commitment (public output) |
+| `nullifier_helper.nr` | Compute nullifier + root from a note | (helper) |
 | `root_helper.nr` | Compute merkle root from a commitment path | (helper) |
 
 ### Protocol Flow
@@ -83,21 +104,25 @@ sequenceDiagram
     participant User
     participant Frontend
     participant Noir as Noir Circuit
-    participant Pool as ShieldedPool
+    participant Pool as ShieldedPool / zkVVM
     participant Verifier as UltraVerifier
 
     rect rgb(59, 130, 246, 0.1)
         Note over User,Pool: Deposit
-        User->>Frontend: commitment + amount
+        User->>Frontend: amount
+        Frontend->>Noir: generate note (value, pk_b, random)
+        Noir-->>Frontend: nullifier, commitment, entry, root
         Frontend->>Pool: deposit(commitment, amount)
         Pool-->>Frontend: Deposit event
     end
 
     rect rgb(16, 185, 129, 0.1)
-        Note over User,Verifier: Withdraw
-        User->>Noir: private inputs
+        Note over User,Verifier: Withdraw (v2b)
+        User->>Noir: private inputs (value, pk_b, random, merkle proof)
         Noir-->>Frontend: proof + publicInputs
-        Frontend->>Pool: withdraw(proof, publicInputs)
+        Frontend->>Pool: withdrawV2b(proof, publicInputs, ciphertext)
+        Pool->>Pool: decrypt amount from ciphertext
+        Pool->>Pool: verify commitment = H(amount, nullifier)
         Pool->>Verifier: verify(proof, publicInputs)
         Pool->>Pool: nullifier marked spent
         Pool-->>User: funds to recipient
@@ -113,14 +138,29 @@ sequenceDiagram
     end
 ```
 
-### ShieldedPool Contract
+### Contracts
+
+#### ShieldedPool (standalone)
 
 - **`deposit(commitment, amount)`** — Store a commitment, emit Deposit event
 - **`transferIntent(root, nullifier, ..., proof)`** — Private note transfer, verified on-chain
-- **`withdraw(proof, publicInputs)`** — Withdraw to recipient bound in the ZK proof
+- **`withdraw(proof, publicInputs)`** — Withdraw with value as public input
+- **`withdrawV2b(proof, publicInputs, ciphertext)`** — Withdraw with encrypted amount (value stays private, decrypted on-chain via `keccak256(nullifier || recipient || POOL_SALT)`)
 - **`registerRoot(root)`** — Register a valid merkle root (computed off-chain)
 
+#### zkVVM (EVVM-integrated)
+
+Extends `EvvmService` for gasless meta-transaction execution. Users sign actions off-chain; an executor submits them on-chain.
+
+- **`deposit(user, commitment, amount, ..., signature, signaturePay)`** — Meta-tx deposit with EVVM payment
+- **`withdraw(user, proof, publicInputs, ..., signature)`** — Meta-tx withdrawal with proof verification
+- **`registerRoot(root)`** — Register a merkle root
+
 Double-spend protection via nullifiers. Reentrancy-guarded. Recipient binding prevents front-running.
+
+### Frontend EVVM Service
+
+The `zkVVM` service class (`packages/vite/lib/services/zkVVM.ts`) wraps deposit and withdraw into signed EVVM actions using `@evvm/evvm-js`. It handles message building, signing, and produces `SignedAction` objects ready for executor submission.
 
 ## Getting Started
 
@@ -161,7 +201,7 @@ bun run test:up
 bun run test:uh
 ```
 
-Tests cover: deposit/withdraw flows with real ZK proofs, duplicate commitment rejection, nullifier double-spend prevention, and unknown root rejection.
+Tests cover: deposit/withdraw flows with real ZK proofs, duplicate commitment rejection, nullifier double-spend prevention, unknown root rejection, and ciphertext-based withdrawals (v2b).
 
 ## Noir Scripts
 
@@ -174,6 +214,15 @@ MONAD_RPC=<rpc_url> PRIVATE_KEY=<key> POOL_ADDRESS=<addr> bun scripts/deposit.mj
 
 # Compile withdraw.nr into a Solidity verifier
 ./packages/noir/scripts/compile_withdraw_verifier.sh
+
+# Compute a commitment hash
+./packages/noir/scripts/compute_commitment.sh
+
+# Compute a nullifier
+./packages/noir/scripts/compute_nullifier.sh
+
+# Generate ciphertext for v2b withdraw
+bun run gen-ciphertext
 ```
 
 See [PROVER_WORKFLOW.md](packages/noir/PROVER_WORKFLOW.md) for the full variable-amount proving workflow.
@@ -203,6 +252,7 @@ Networks must be [supported by Wagmi](https://wagmi.sh/react/api/chains#availabl
 | `bun run test` | Run all tests |
 | `bun run test:up` | Run UltraPlonk tests |
 | `bun run test:uh` | Run UltraHonk tests |
+| `bun run gen-ciphertext` | Generate v2b withdrawal ciphertext |
 
 ## License
 
