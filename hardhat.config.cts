@@ -38,6 +38,11 @@ const config: HardhatUserConfig = {
       url: 'https://holesky.drpc.org',
       accounts: vars.has('holesky') ? [vars.get('holesky')] : [],
     },
+    sepolia: {
+      url: 'https://ethereum-sepolia-rpc.publicnode.com',
+      chainId: 11155111,
+      accounts: vars.has('sepolia') ? [vars.get('sepolia')] : [],
+    },
   },
   paths: {
     root: 'packages',

@@ -21,6 +21,16 @@ const SHIELDED_POOL_ABI = [
     inputs: [{ name: 'root', type: 'bytes32' }],
     outputs: [],
   },
+  {
+    type: 'function',
+    name: 'withdraw',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'proof', type: 'bytes' },
+      { name: 'publicInputs', type: 'bytes32[]' },
+    ],
+    outputs: [],
+  },
 ] as const;
 
 const poolAddress = (import.meta as unknown as { env: { VITE_POOL_ADDRESS?: string } }).env
@@ -56,12 +66,26 @@ export function useDeposit() {
     });
   };
 
+  const withdraw = (proof: `0x${string}`, publicInputs: `0x${string}`[]) => {
+    if (!poolAddress) {
+      toast.error('Set VITE_POOL_ADDRESS in .env');
+      return;
+    }
+    writeContract({
+      address: poolAddress,
+      abi: SHIELDED_POOL_ABI,
+      functionName: 'withdraw',
+      args: [proof, publicInputs],
+    });
+  };
+
   return {
     isConnected,
     connect: () => connect({ connector: connectors[0], chainId: deployment.networkConfig.id }),
     disconnect,
     deposit,
     registerRoot,
+    withdraw,
     isPending: isPending || isConfirming,
     isSuccess,
     error,

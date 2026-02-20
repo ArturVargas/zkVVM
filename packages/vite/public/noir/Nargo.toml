@@ -1,0 +1,9 @@
+[package]
+name = "noirstarter"
+type = "bin"
+
+[dependencies]
+binary_merkle_root = { git = "https://github.com/privacy-scaling-explorations/zk-kit.noir", tag = "binary-merkle-root-v0.0.1", directory = "packages/binary-merkle-root" }
+ec = { git = "https://github.com/noir-lang/noir-edwards", tag = "v0.2.5" }
+poseidon = { tag = "v0.1.1", git = "https://github.com/noir-lang/poseidon" }
+# keccak256 omitido: falla con hardhat-noirenberg (mod tests + keccakf1600 privado). Añadir solo si el circuito lo usa.

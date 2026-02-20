@@ -1,0 +1,6 @@
+{
+  "poolAddress": "0x8d10ad45b21d4db2e7270e519a757c764c6501ac",
+  "usdcAddress": "0x9b5cdf523ce2c706db157ee2135ffeea68674772",
+  "verifierAddress": "0x3c453536fa6ce97ee92f186ee954e89ab316e315",
+  "withdrawVerifierAddress": "0x1d42c0cd5ff14ee71456473828996b1bc251a735"
+}

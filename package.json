@@ -18,7 +18,8 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
     "@types/bun": "^1.1.12",
-    "hardhat": "^2.19.2"
+    "hardhat": "^2.19.2",
+    "ts-node": "^10.9.2"
   },
   "dependencies": {
     "@aztec/bb.js": "0.63.1",
