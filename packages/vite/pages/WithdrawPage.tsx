@@ -12,14 +12,14 @@ export function WithdrawPage() {
 
     return (
         <div className="withdraw-container page-container">
-            <div className="glass-panel withdraw-card">
+            <div className="glass-panel withdraw-card fade-in-up">
                 <div className="withdraw-header">
                     <h2>Redeem zkVVM Notes</h2>
                     <p>Redeem your shielded commitment via ZK-Proof verification.</p>
                 </div>
 
                 <form className="withdraw-form" onSubmit={handleWithdraw}>
-                    <div className="input-group full-width">
+                    <div className="input-group full-width fade-in-up delay-1">
                         <label>ZKVVM NOTE</label>
                         <input
                             type="text"
@@ -29,7 +29,7 @@ export function WithdrawPage() {
                         />
                     </div>
 
-                    <div className="input-group full-width">
+                    <div className="input-group full-width fade-in-up delay-2">
                         <label>DESTINATION ADDRESS</label>
                         <input
                             type="text"
@@ -39,7 +39,7 @@ export function WithdrawPage() {
                         />
                     </div>
 
-                    <div className="proof-logic-box">
+                    <div className="proof-logic-box fade-in-up delay-3">
                         <div className="proof-logic-header">
                             <span className="proof-icon">&#9871;</span> ZK PROOF LOGIC
                         </div>
@@ -50,7 +50,7 @@ export function WithdrawPage() {
                         </ul>
                     </div>
 
-                    <button type="submit" className="btn-primary submit-btn">
+                    <button type="submit" className="btn-primary submit-btn fade-in-up delay-4">
                         Generate Proof & Withdraw ⚡
                     </button>
                 </form>

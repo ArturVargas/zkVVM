@@ -12,7 +12,7 @@ export function DashboardPage() {
 
     return (
         <div className="dashboard-container page-container">
-            <div className="glass-panel deposit-card">
+            <div className="glass-panel deposit-card fade-in-up">
                 <div className="deposit-header flex-between">
                     <div>
                         <h2>DEPOSIT</h2>
@@ -49,7 +49,7 @@ export function DashboardPage() {
                 </form>
             </div>
 
-            <div className="vault-section">
+            <div className="vault-section fade-in-up delay-1">
                 <div className="vault-header flex-between">
                     <h3>YOUR LOCAL VAULT</h3>
                     <span className="vault-subtitle">&#10003; KEYS STORED IN BROWSER SESSION</span>

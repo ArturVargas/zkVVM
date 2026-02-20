@@ -1,7 +1,9 @@
-import React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { injected } from 'wagmi/connectors';
+import { motion } from 'framer-motion';
+import { clsx } from 'clsx';
 import './Layout.css';
 
 function WalletButton() {
@@ -33,25 +35,108 @@ function WalletButton() {
 }
 
 export function Layout() {
+    const glowRef = useRef<HTMLDivElement>(null);
+    const location = useLocation();
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 20);
+        };
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    useEffect(() => {
+        let currentX = window.innerWidth / 2;
+        let currentY = window.innerHeight / 2;
+        let targetX = currentX;
+        let targetY = currentY;
+        let animationFrameId: number;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            targetX = e.clientX;
+            targetY = e.clientY;
+        };
+
+        const updateGlowPosition = () => {
+            // Spring smoothing effect
+            currentX += (targetX - currentX) * 0.1;
+            currentY += (targetY - currentY) * 0.1;
+
+            if (glowRef.current) {
+                glowRef.current.style.transform = `translate(${currentX}px, ${currentY}px) translate(-50%, -50%)`;
+            }
+
+            animationFrameId = requestAnimationFrame(updateGlowPosition);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        animationFrameId = requestAnimationFrame(updateGlowPosition);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            cancelAnimationFrame(animationFrameId);
+        };
+    }, []);
+
+    const navLinks = [
+        { name: "Home", href: "/" },
+        { name: "Dashboard", href: "/dashboard" },
+        { name: "Withdraw", href: "/withdraw" },
+    ];
+
     return (
         <div className="app-container">
-            <nav className="top-nav">
-                <div className="nav-content">
-                    <div className="nav-brand">
-                        <span className="logo-badge">ZK</span>
-                        <strong>VVM</strong>
+            {/* Ambient Background layer */}
+            <div className="ambient-bg">
+                <div className="blob blob-1"></div>
+                <div className="blob blob-2"></div>
+                <div className="blob blob-3"></div>
+            </div>
+
+            {/* Cursor Glow */}
+            <div className="cursor-glow" ref={glowRef}></div>
+
+            <nav className="nav-wrapper">
+                <motion.div
+                    initial={{ y: -20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className={clsx(
+                        "nav-pill",
+                        scrolled ? "scrolled" : ""
+                    )}
+                >
+                    <div className="nav-logo-group">
+                        <NavLink to="/" className="nav-logo-link">
+                            <div className="nav-logo-icon group-hover:scale-110">
+                                <span className="nav-logo-text-zk">zk</span>
+                            </div>
+                            <div className="nav-logo-text-vvm">
+                                <span>VVM</span>
+                            </div>
+                        </NavLink>
+
+                        <div className="nav-links-desktop">
+                            {navLinks.map((link) => (
+                                <NavLink
+                                    key={link.href}
+                                    to={link.href}
+                                    className={clsx(
+                                        "nav-link-item",
+                                        location.pathname === link.href ? "active" : ""
+                                    )}
+                                >
+                                    {link.name}
+                                </NavLink>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="nav-links">
-                        <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>Home</NavLink>
-                        <NavLink to="/dashboard" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>Dashboard</NavLink>
-                        <NavLink to="/withdraw" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>Withdraw</NavLink>
-                    </div>
-
-                    <div className="nav-actions">
+                    <div className="nav-actions-group">
                         <WalletButton />
                     </div>
-                </div>
+                </motion.div>
             </nav>
 
             <main className="main-content">
