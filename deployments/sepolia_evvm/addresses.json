@@ -11,7 +11,7 @@
     "real": ""
   },
   "zkVVM": {
-    "address": "0x194fa23316ca5b155aca01434cc82b518c0654ac",
-    "withdrawVerifier": "0xd8c644706c56a49b23d4e363c8316a431d7a578b"
+    "address": "0x0c66ff20b330457256d894457e3d44d83f3e1da0",
+    "withdrawVerifier": "0xc9680781b5c53e7babeaea27a4c970666ff89ab8"
   }
 }

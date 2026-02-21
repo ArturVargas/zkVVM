@@ -6,6 +6,8 @@ import {AdvancedStrings} from '@evvm/testnet-contracts/library/utils/AdvancedStr
 import {IVerifier} from './IVerifier.sol';
 
 contract zkVVM is EvvmService {
+    error DepositNonceValidationFailed(bytes reason);
+    error DepositPaymentFailed(bytes reason);
     bytes32 private constant POOL_SALT = keccak256('ShieldedPool.v2b');
     mapping(bytes => bool) public commitments;
     mapping(bytes32 => bool) public merkleRoots;
@@ -42,14 +44,17 @@ contract zkVVM is EvvmService {
         uint256 noncePay,
         bytes memory signaturePay
     ) external {
-        core.validateAndConsumeNonce(
+        try core.validateAndConsumeNonce(
             user,
             keccak256(abi.encode('deposit', commitment, amount)),
             originExecutor,
             nonce,
             true,
             signature
-        );
+        ) {
+        } catch (bytes memory reason) {
+            revert DepositNonceValidationFailed(reason);
+        }
 
         require(!commitments[commitment], 'zkVVM: commitment-already-used');
         require(amount > 0, 'zkVVM: amount-must-be-greater-than-zero');
@@ -60,15 +65,21 @@ contract zkVVM is EvvmService {
         commitments[commitment] = true;
 
         // Process payment through EVVM (pull payment from `user` into the pool)
-        requestPay(
+        try core.pay(
             user,
+            address(this),
+            "",
             getPrincipalTokenAddress(),
             amount,
             priorityFeePay,
+            address(0),
             noncePay,
             true,
             signaturePay
-        );
+        ) {
+        } catch (bytes memory reason) {
+            revert DepositPaymentFailed(reason);
+        }
 
         emit Deposited(user, commitment, amount);
     }

@@ -48,24 +48,26 @@ export class zkVVM extends BaseService {
   }): Promise<SignedAction<IDepositData>> {
     const evvmId = await this.getEvvmID();
     const functionName = 'deposit';
+    const normalizedCommitment = ensureEvenHex(commitment);
     const hashPayload = this.buildHashPayload(functionName, {
-      commitment,
+      commitment: normalizedCommitment,
       amount,
     });
     const message = this.buildMessageToSign(evvmId, hashPayload, originExecutor, nonce, true);
 
-    const signature = await this.signer.signMessage(message);
+    const signature = ensureEvenHex(await this.signer.signMessage(message));
+    const signaturePay = ensureEvenHex(evvmSignedAction.data.signature);
 
     return new SignedAction(this, evvmId, functionName, {
       user: this.signer.address,
-      commitment,
+      commitment: normalizedCommitment,
       amount,
       originExecutor,
       nonce,
       signature,
       priorityFeePay: evvmSignedAction.data.priorityFee,
       noncePay: evvmSignedAction.data.nonce,
-      signaturePay: evvmSignedAction.data.signature,
+      signaturePay,
     });
   }
 
@@ -110,6 +112,13 @@ export class zkVVM extends BaseService {
       signature,
     });
   }
+}
+
+function ensureEvenHex(value: string): string {
+  if (!value.startsWith('0x')) return value;
+  const hex = value.slice(2);
+  if (hex.length % 2 === 0) return value;
+  return `0x0${hex}`;
 }
 
 export function createZkVVMService(signer: ISigner) {

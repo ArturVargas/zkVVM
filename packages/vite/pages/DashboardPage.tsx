@@ -101,6 +101,8 @@ export function DashboardPage() {
       const { amount: amt, secret, salt } = zkService.parseNoteString(stored.noteStr);
       const note = await zkService.recomputeNote(zkNoteArtifact as any, amt, secret, salt);
 
+      const commitmentHex = normalizeHexBytes(`0x${note.entry.toString(16)}`);
+
       // amount in token units (mirrors zkService.generateNote logic)
       const value = BigInt(Math.floor(parseFloat(stored.amount) * 1e18));
 
@@ -144,7 +146,7 @@ export function DashboardPage() {
 
       // Build deposit SignedAction embedding pay metadata
       const depositAction = await service.deposit({
-        commitment: `0x${note.entry.toString(16)}`,
+        commitment: commitmentHex,
         amount: value,
         originExecutor: zeroAddress,
         nonce: nonceDeposit,
@@ -183,7 +185,7 @@ export function DashboardPage() {
         evvmId: depositEvvmId,
         functionName: 'deposit',
         hashArgs: {
-          commitment: `0x${note.entry.toString(16)}`,
+          commitment: commitmentHex,
           amount: value,
         },
         executor: zeroAddress,
