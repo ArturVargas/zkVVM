@@ -3,7 +3,7 @@
  * pk_b = wallet address, random = timestamp (seconds). Uses noir_js so no separate poseidon lib needed.
  */
 import { Noir } from '@noir-lang/noir_js';
-import { getNoteGeneratorCircuit } from '../../noir/compile.js';
+import { getNoteGeneratorCircuit } from '../../../circuits/compile.js';
 
 export const NOTE_STORAGE_KEY = 'shielded_pool_note';
 
@@ -18,6 +18,8 @@ export interface NoteData {
   merkle_proof_length: number;
   merkle_proof_indices: number[];
   merkle_proof_siblings: string[];
+  claimed?: boolean;
+  claimedTxHash?: string;
 }
 
 let noteGeneratorNoir: Noir | null = null;
@@ -103,5 +105,17 @@ export function loadNote(): NoteData | null {
     return JSON.parse(raw) as NoteData;
   } catch {
     return null;
+  }
+}
+
+export function markNoteClaimed(txHash: string): void {
+  try {
+    const note = loadNote();
+    if (!note) return;
+    note.claimed = true;
+    note.claimedTxHash = txHash;
+    localStorage.setItem(NOTE_STORAGE_KEY, JSON.stringify(note));
+  } catch {
+    // ignore
   }
 }
