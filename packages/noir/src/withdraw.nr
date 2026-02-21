@@ -1,4 +1,4 @@
-// Withdraw circuit (v2b): prove ownership of a note and bind withdrawal to a recipient.
+// Withdraw circuit (v2b): prove ownership of a note via a bearer secret (pk_b) and bind withdrawal to a recipient.
 // Public inputs (order for Solidity): nullifier, merkle_proof_length, expected_merkle_root, recipient, commitment.
 // value is PRIVATE; commitment = H(value, nullifier) so the contract can verify the decrypted amount from ciphertext.
 // Prover: WithdrawProver.toml. Para compilar verifier: ./scripts/compile_withdraw_verifier.sh

@@ -14,7 +14,7 @@ describe("ZKService Tests", () => {
 
     test("generateNote should correctly execute note_generator and return Note object", async () => {
         const value = 100n;
-        const pk_b = 0xabc123n;
+        const pk_b = service.generateSecret();
         const random = 0xdef456n;
 
         const note = await service.generateNote(noteGeneratorArtifact as any, value, pk_b, random);
@@ -30,7 +30,7 @@ describe("ZKService Tests", () => {
 
     test("generateWithdrawProof should execute withdraw circuit successfully", async () => {
         const value = 500n;
-        const pk_b = 0xabc123n;
+        const pk_b = service.generateSecret();
         const random = 0xdef456n;
         const recipient = 0x789n;
 
@@ -68,7 +68,7 @@ describe("ZKService Tests", () => {
 
     test("generateWithdrawProof should fail with invalid commitment", async () => {
         const value = 500n;
-        const pk_b = 0xabc123n;
+        const pk_b = service.generateSecret();
         const random = 0xdef456n;
 
         const note = await service.generateNote(noteGeneratorArtifact as any, value, pk_b, random);

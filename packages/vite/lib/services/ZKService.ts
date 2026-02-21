@@ -4,8 +4,8 @@ import { CompiledCircuit } from '@noir-lang/types';
 
 export interface Note {
   value: bigint;
-  pk_b: bigint;
-  random: bigint;
+  pk_b: bigint; // Arbitrary bearer secret (not necessarily a recipient address)
+  random: bigint; // Randomness/salt
   nullifier: bigint;
   commitment: bigint;
   entry: bigint;
@@ -104,9 +104,16 @@ export class ZKService {
       21888242871839275222246405745257275088548364400416034343698204186575808495617n
     );
   }
+  /**
+   * Generates a random Field-sized secret for pk_b.
+   */
+  generateSecret(): bigint {
+    return this.getRandomBigInt();
+  }
 
   /**
    * High-level API for creating a note using note_generator circuit.
+   * @param pk_b An arbitrary secret (bearer key). Does not need to be a wallet address.
    */
   async generateNote(
     circuit: CompiledCircuit,

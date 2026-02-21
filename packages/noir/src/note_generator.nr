@@ -6,7 +6,7 @@ fn compute_entry(value: Field, holder: Field, random: Field, nullifier: Field) -
     poseidon2([poseidon2([value, holder]), poseidon2([random, nullifier])])
 }
 
-// value = amount (token units), pk_b = wallet address as Field, random = timestamp (seconds).
+// value = amount (token units), pk_b = arbitrary secret (bearer key) as Field, random = randomness/salt.
 fn main(value: Field, pk_b: Field, random: Field) -> pub (Field, Field, Field, Field) {
     let nullifier = poseidon2([random, pk_b]);
     let commitment = poseidon2([value, nullifier]);
