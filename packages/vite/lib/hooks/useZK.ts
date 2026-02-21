@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { getRequiredViteEnv } from '../env.js';
 import { zkService, type Note } from '../services/ZKService';
 import noteGeneratorArtifact from '../../../noir/target/note_generator.json';
 import withdrawArtifact from '../../../noir/target/withdraw.json';
@@ -209,7 +210,7 @@ export function useZK() {
         try {
             const commitmentHex = `0x${note.entry.toString(16)}`;
             const nullifierHex = `0x${note.nullifier.toString(16)}`;
-            const zkVVMAddress = (import.meta.env.VITE_ZKVVM_ADDRESS || '0x0000000000000000000000000000000000000000') as string;
+            const zkVVMAddress = getRequiredViteEnv('VITE_ZKVVM_ADDRESS');
             const zkVVMAbi = (await import('../../../artifacts/contracts/zkVVM.sol/zkVVM.json')).abi as any;
             const committed = await publicClient.readContract({ address: zkVVMAddress, abi: zkVVMAbi, functionName: 'commitments', args: [commitmentHex] });
             const nullifierUsed = await publicClient.readContract({ address: zkVVMAddress, abi: zkVVMAbi, functionName: 'nullifiers', args: [nullifierHex] });

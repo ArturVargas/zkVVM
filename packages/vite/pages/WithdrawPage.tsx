@@ -3,6 +3,7 @@ import { WalletGuard } from '../components/WalletGuard.js';
 import { useZK } from '../lib/hooks/useZK';
 import useEvvm from '../lib/hooks/useEvvm';
 import { createZkVVMService } from '../lib/services/zkVVM';
+import { getRequiredViteEnv } from '../lib/env.js';
 import './WithdrawPage.css';
 
 export function WithdrawPage() {
@@ -107,7 +108,7 @@ export function WithdrawPage() {
     };
 
     const executeWithFisher = async (signedAction: unknown) => {
-        const fisherUrl = (import.meta.env.VITE_FISHER_URL || 'http://localhost:8787') as string;
+        const fisherUrl = getRequiredViteEnv('VITE_FISHER_URL');
         const res = await fetch(`${fisherUrl.replace(/\/$/, '')}/execute`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },

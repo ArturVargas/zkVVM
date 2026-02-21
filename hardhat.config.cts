@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import '@nomicfoundation/hardhat-toolbox-viem';
 import '@nomicfoundation/hardhat-viem';
 import '@nomicfoundation/hardhat-chai-matchers';
@@ -12,9 +13,22 @@ import { resolve } from 'path';
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: '0.8.28',
-    settings: {
-      optimizer: { enabled: true, runs: 5000 },
+    compilers: [
+      {
+        version: '0.8.28',
+        settings: {
+          optimizer: { enabled: true, runs: 5000 },
+        },
+      },
+    ],
+    overrides: {
+      'contracts/zkVVM.sol': {
+        version: '0.8.28',
+        settings: {
+          viaIR: true,
+          optimizer: { enabled: true, runs: 5000 },
+        },
+      },
     },
   },
   defaultNetwork: 'localhost',

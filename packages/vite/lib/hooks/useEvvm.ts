@@ -2,8 +2,9 @@ import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useAccount, useConnect, useDisconnect, useWalletClient, usePublicClient } from 'wagmi';
 import zkVVMArtifact from '../../../artifacts/contracts/zkVVM.sol/zkVVM.json';
 import { createSignerWithViem, type ISigner } from '@evvm/evvm-js';
+import { getRequiredViteEnv } from '../env.js';
 
-const ZKVVM_ADDRESS = (import.meta.env.VITE_ZKVVM_ADDRESS || '') as string;
+const ZKVVM_ADDRESS = getRequiredViteEnv('VITE_ZKVVM_ADDRESS');
 
 export function useEvvm() {
   const { address, isConnected } = useAccount();

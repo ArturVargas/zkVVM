@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react-swc';
 
 export default {
+  envDir: '../../',
   assetsInclude: ['**/*.wasm'],
   optimizeDeps: {
     esbuildOptions: {

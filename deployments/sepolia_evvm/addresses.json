@@ -2,16 +2,16 @@
   "network": "sepolia_evvm",
   "chainId": 11155111,
   "evvm": {
-    "core": "",
-    "staking": ""
+    "core": "0xFA56B6992c880393e3bef99e41e15D0C07803BC1",
+    "staking": "0x805F35c5144FeBb5AA49Dbc785634060341A0a5D"
   },
-  "admin": "",
+  "admin": "0xB4eC21A9dd4950b431CbAEFf6c17c9eBE10fa34C",
   "verifier": {
-    "mock": "",
+    "mock": "0xc9680781b5c53e7babeaea27a4c970666ff89ab8",
     "real": ""
   },
   "zkVVM": {
-    "address": "",
-    "withdrawVerifier": ""
+    "address": "0x194fa23316ca5b155aca01434cc82b518c0654ac",
+    "withdrawVerifier": "0xd8c644706c56a49b23d4e363c8316a431d7a578b"
   }
 }
