@@ -5,6 +5,14 @@ export default {
   build: {
     target: 'esnext',
   },
+  server: {
+    host: '0.0.0.0',
+    port: parseInt(process.env.PORT || '5173'),
+  },
+  preview: {
+    host: '0.0.0.0',
+    port: parseInt(process.env.PORT || '4173'),
+  },
   optimizeDeps: {
     esbuildOptions: {
       target: 'esnext',
