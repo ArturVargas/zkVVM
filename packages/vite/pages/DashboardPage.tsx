@@ -380,7 +380,7 @@ export function DashboardPage() {
                 <div className="table-row" key={i}>
                   <div className="text-secondary">{note.date}</div>
                   <div>
-                    <strong>{note.amount}</strong> <span className="text-secondary">USDC</span>
+                    <strong>{note.amount}</strong> 
                     {noteStatuses[note.noteStr] === 'onchain' ? (
                       <span className="status-badge status-onchain">ONCHAIN</span>
                     ) : (

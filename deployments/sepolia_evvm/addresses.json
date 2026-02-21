@@ -7,11 +7,11 @@
   },
   "admin": "0x15FF236ecD89b34a527112F7f51d6215609df409",
   "verifier": {
-    "mock": "0xc9680781b5c53e7babeaea27a4c970666ff89ab8",
+    "mock": "0x7f211f541ff66a37b51d48c96edbb2a54a109b23",
     "real": ""
   },
   "zkVVM": {
-    "address": "0xe746c095f4d144e68220535a24806a04ae003751",
-    "withdrawVerifier": "0xc9680781b5c53e7babeaea27a4c970666ff89ab8"
+    "address": "0x37b4879e0a06323cc429307883d1d73e08c78059",
+    "withdrawVerifier": "0x7f211f541ff66a37b51d48c96edbb2a54a109b23"
   }
 }
