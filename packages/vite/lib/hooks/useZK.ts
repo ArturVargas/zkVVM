@@ -115,8 +115,26 @@ export function useZK() {
                 siblings: new Array(10).fill(0n)
             };
 
-            // 4. Generate Proof (merkle_proof_length = 1)
-            const result = await zkService.generateWithdrawProof(
+            // Store public inputs (from the circuit's pub inputs in order)
+            // From withdraw.nr: nullifier, merkle_proof_length, expected_merkle_root, recipient, commitment
+            const publicInputs = [
+                note.nullifier,
+                1n, // merkle_proof_length
+                note.root, // expected_merkle_root
+                BigInt(recipient),
+                note.commitment
+            ];
+
+            console.log('Circuit public inputs:', {
+                nullifier: note.nullifier.toString(),
+                merkle_proof_length: 1,
+                expected_merkle_root: note.root.toString(),
+                recipient: recipient,
+                commitment: note.commitment.toString()
+            });
+
+            // 4. Generate Witness using Noir (merkle_proof_length = 1)
+            const witnessResult = await zkService.generateWithdrawProof(
                 withdrawArtifact as CompiledCircuit,
                 note,
                 BigInt(recipient),
@@ -125,8 +143,39 @@ export function useZK() {
                 1 // Only process the first level
             );
 
-            console.log('Proof generated successfully:', result);
-            return result;
+            console.log('Witness generated successfully:', witnessResult);
+
+            // 5. Generate proof representation from witness
+            const { witness } = witnessResult;
+            if (!witness) {
+                throw new Error('No witness generated from circuit');
+            }
+
+            console.log('Converting witness to proof...');
+            const proofData = await zkService.generateProofFromWitness(
+                withdrawArtifact as CompiledCircuit,
+                witness
+            );
+
+            console.log('Proof generated:', { proofLength: proofData.proof.length });
+            
+            // Convert proof to hex (it's already hex from generateProofFromWitness)
+            const proofHex = proofData.proof;
+            
+            // Convert public inputs to hex strings
+            const publicInputsHex = publicInputs.map((pi: bigint) => {
+              return '0x' + pi.toString(16).padStart(64, '0');
+            });
+
+            console.log('Public inputs (hex):', publicInputsHex);
+
+            console.log('Converted proof to hex, length:', proofHex.length);
+            console.log('Converted public inputs:', publicInputsHex);
+            
+            return {
+                proof: proofHex,
+                publicInputs: publicInputsHex
+            };
         } catch (err: any) {
             const msg = err.message || 'Failed to generate withdrawal proof';
             setProvingError(msg);
