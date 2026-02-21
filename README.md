@@ -149,6 +149,28 @@ Double-spend protection via nullifiers. Reentrancy-guarded. Recipient binding pr
 bun i
 ```
 
+### From Scratch (EVVM Sepolia)
+
+```bash
+# 1) Install dependencies
+bun install
+
+# 2) Create env file
+cp .env.example .env
+
+# 3) Start fisher (optional but recommended)
+bun run start:fisher
+
+# 4) Deploy contracts to EVVM Sepolia (mock verifier)
+bun run deploy:sepolia
+
+# 5) Switch to real verifier when ready
+bun run deploy:sepolia:real
+
+# 6) Start frontend
+bun run vite:dev
+```
+
 ### Run Locally
 
 ```bash
