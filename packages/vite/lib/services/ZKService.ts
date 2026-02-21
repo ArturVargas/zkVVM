@@ -3,11 +3,11 @@ import { Noir } from '@noir-lang/noir_js';
 import { CompiledCircuit } from '@noir-lang/types';
 
 export interface Note {
-  secret: bigint;
-  nullifier: bigint;
   value: bigint;
+  pk_b: bigint;
+  random: bigint;
+  nullifier: bigint;
   commitment: bigint;
-  nullifierHash: bigint;
   entry: bigint;
   root: bigint;
 }
@@ -107,43 +107,30 @@ export class ZKService {
 
   /**
    * High-level API for creating a note using note_generator circuit.
-   * Commitment = Poseidon([secret, nullifier, value])
    */
   async generateNote(
     circuit: CompiledCircuit,
     value: bigint,
-    secretOverride?: bigint,
-    nullifierOverride?: bigint,
+    pk_b: bigint,
+    randomOverride?: bigint,
   ): Promise<Note> {
-    const secret = secretOverride ?? this.getRandomBigInt();
-    const nullifier = nullifierOverride ?? this.getRandomBigInt();
+    const random = randomOverride ?? BigInt(Math.floor(Date.now() / 1000));
 
-    // Use the updated Poseidon logic: Commitment = H(secret, nullifier, value)
-    const bb = await this.getBB();
-    const commitmentArr = await bb.poseidon3Hash([new Fr(secret), new Fr(nullifier), new Fr(value)]);
-    const commitment = this.toBigInt(commitmentArr);
+    const result = await this.executeCircuit(circuit, {
+      value,
+      pk_b,
+      random,
+    });
 
-    const nullifierHashArr = await bb.poseidon2Hash([new Fr(nullifier)]); // Wait, circuit uses hash_1? hash_1 in poseidon is often hash_1([x]) which is just H(x, 0) or similar.
-    // Actually, let's use the circuit to be sure if possible, or match its poseidon usage.
-    // In main.nr: let calculated_nullifier_hash = poseidon1([nullifier]);
-    // In BB.js, poseidon1 might be different. Let's stick to consistent BB.js usage.
-    const nullifierHash = this.toBigInt(await bb.poseidon2Hash([new Fr(nullifier), new Fr(0n)]));
-
-    // We still need to compute the initial root (simple case: empty siblings)
-    // This is just for demonstration/testing if the circuit expects it.
-    let current = commitment;
-    for (let i = 0; i < 10; i++) {
-      current = this.toBigInt(await bb.poseidon2Hash([new Fr(current), new Fr(0n)]));
-    }
-    const root = current;
+    const [nullifier, commitment, entry, root] = result.map((r: any) => this.toBigInt(r));
 
     return {
-      secret,
-      nullifier,
       value,
-      nullifierHash,
+      pk_b,
+      random,
+      nullifier,
       commitment,
-      entry: commitment, // In this model, entry is commitment
+      entry,
       root,
     };
   }
@@ -159,14 +146,16 @@ export class ZKService {
     merkleProof: { indices: number[]; siblings: bigint[] },
   ) {
     const inputs = {
-      root: merkleRoot,
-      nullifierHash: note.nullifierHash,
-      recipient: recipient,
-      value: note.value,
-      secret: note.secret,
       nullifier: note.nullifier,
-      path_indices: merkleProof.indices,
-      path_siblings: merkleProof.siblings,
+      merkle_proof_length: merkleProof.indices.length,
+      expected_merkle_root: merkleRoot,
+      recipient: recipient,
+      commitment: note.commitment,
+      value: note.value,
+      pk_b: note.pk_b,
+      random: note.random,
+      merkle_proof_indices: merkleProof.indices,
+      merkle_proof_siblings: merkleProof.siblings,
     };
 
     const noir = new Noir(circuit);
@@ -186,3 +175,4 @@ export class ZKService {
 }
 
 export const zkService = new ZKService();
+

@@ -14,15 +14,15 @@ describe("ZKService Tests", () => {
 
     test("generateNote should correctly execute note_generator and return Note object", async () => {
         const value = 100n;
-        const secret = 0xabc123n;
-        const nullifier = 0xdef456n;
+        const pk_b = 0xabc123n;
+        const random = 0xdef456n;
 
-        const note = await service.generateNote(noteGeneratorArtifact as any, value, secret, nullifier);
+        const note = await service.generateNote(noteGeneratorArtifact as any, value, pk_b, random);
 
         expect(note.value).toBe(value);
-        expect(note.secret).toBe(secret);
-        expect(note.nullifier).toBe(nullifier);
-        expect(note.nullifierHash).toBeDefined();
+        expect(note.pk_b).toBe(pk_b);
+        expect(note.random).toBe(random);
+        expect(note.nullifier).toBeDefined();
         expect(note.commitment).toBeDefined();
         expect(note.entry).toBeDefined();
         expect(note.root).toBeDefined();
@@ -30,11 +30,11 @@ describe("ZKService Tests", () => {
 
     test("generateWithdrawProof should execute withdraw circuit successfully", async () => {
         const value = 500n;
-        const secret = 0xabc123n;
-        const nullifier = 0xdef456n;
+        const pk_b = 0xabc123n;
+        const random = 0xdef456n;
         const recipient = 0x789n;
 
-        const note = await service.generateNote(noteGeneratorArtifact as any, value, secret, nullifier);
+        const note = await service.generateNote(noteGeneratorArtifact as any, value, pk_b, random);
 
         // Simple Merkle Tree (depth 10, all zeros except leaf at index 0)
         const depth = 10;
@@ -45,9 +45,11 @@ describe("ZKService Tests", () => {
 
         // Compute depth-10 root using helper circuit
         const result = await service.executeCircuit(rootHelperArtifact as any, {
-            secret: note.secret,
-            nullifier: note.nullifier,
             value: note.value,
+            from: note.pk_b,
+            random: note.random,
+            nullifier_in: note.nullifier,
+            merkle_proof_length: depth,
             merkle_proof_indices: merkleProof.indices,
             merkle_proof_siblings: merkleProof.siblings
         });
@@ -66,13 +68,13 @@ describe("ZKService Tests", () => {
 
     test("generateWithdrawProof should fail with invalid commitment", async () => {
         const value = 500n;
-        const secret = 0xabc123n;
-        const nullifier = 0xdef456n;
+        const pk_b = 0xabc123n;
+        const random = 0xdef456n;
 
-        const note = await service.generateNote(noteGeneratorArtifact as any, value, secret, nullifier);
+        const note = await service.generateNote(noteGeneratorArtifact as any, value, pk_b, random);
 
         // Corrupt the note (this will fail the commitment check in the circuit)
-        const corruptedNote: Note = { ...note, secret: 0xdeadbeefn };
+        const corruptedNote: Note = { ...note, value: 999n };
 
         const depth = 10;
         const merkleProof = {
@@ -82,9 +84,11 @@ describe("ZKService Tests", () => {
 
         // Use helper to get a valid root for the ORIGINAL note
         const res = await service.executeCircuit(rootHelperArtifact as any, {
-            secret: note.secret,
-            nullifier: note.nullifier,
             value: note.value,
+            from: note.pk_b,
+            random: note.random,
+            nullifier_in: note.nullifier,
+            merkle_proof_length: depth,
             merkle_proof_indices: merkleProof.indices,
             merkle_proof_siblings: merkleProof.siblings
         });
