@@ -191,21 +191,6 @@ export function DashboardPage() {
                                         >
                                             &#128190; COPY KEY
                                         </button>
-                                        <button
-                                            className="btn-secondary check-btn"
-                                            onClick={async () => {
-                                                const statusKey = note.noteStr;
-                                                setOnchainStatus((s) => ({ ...s, [statusKey]: { loading: true } }));
-                                                try {
-                                                    const result = await getOnchainStatus(note.noteStr, publicClient);
-                                                    setOnchainStatus((s) => ({ ...s, [statusKey]: { loading: false, result } }));
-                                                } catch (err: any) {
-                                                    setOnchainStatus((s) => ({ ...s, [statusKey]: { loading: false, error: err.message || String(err) } }));
-                                                }
-                                            }}
-                                        >
-                                            CHECK ON-CHAIN
-                                        </button>
                                         {onchainStatus[note.noteStr] && (
                                             <div className="status-inline">
                                                 {onchainStatus[note.noteStr].loading && <span>Checking...</span>}
