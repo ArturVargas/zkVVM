@@ -1,33 +1,124 @@
-# zkVVM
+# zkVVM - Zero-Knowledge Virtual Machine
 
-A privacy-preserving **Shielded Pool** protocol built with [Noir](https://noir-lang.org/) zero-knowledge circuits, [Solidity](https://soliditylang.org/) smart contracts, and a [React](https://react.dev/) + [Vite](https://vite.dev/) frontend. Users can deposit tokens into the pool and withdraw to any address without revealing the link between depositor and recipient.
+> ⚠️ **Status:** Development (feat/evvm-integration branch)
+> - 🔴 **Not Production Ready** - See [Production Gaps](docs/PRODUCTION_GAPS.md)
+> - ✅ **Functional on Sepolia EVVM** with MockVerifier
+
+A **gasless, privacy-preserving protocol** built on [EVVM](https://evvm.network/) (Ethereum Virtual Virtual Machine) using [Noir](https://noir-lang.org/) zero-knowledge circuits. Users deposit tokens as bearer notes and withdraw to any address without revealing the link between depositor and recipient - **all without paying gas fees**.
+
+## Key Features
+
+- 🎭 **Full Privacy:** Zero-knowledge proofs hide transaction graphs
+- ⛽ **Gasless UX:** Users sign messages; Fisher relayers execute transactions
+- 🪙 **Bearer Notes:** Notes are digital cash (secret + salt = ownership)
+- 🌐 **EVVM Integration:** Native integration with EVVM protocol for gasless execution
+- 🔐 **Merkle Tree:** On-chain state commitment for scalability
+
+## Quick Start
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) v1.0+
+- [Nargo](https://noir-lang.org/docs/getting_started/installation/) v0.39+ (Noir CLI)
+- MetaMask or compatible Web3 wallet
+- Sepolia EVVM testnet funds
+
+### Installation
+
+```bash
+# Clone and install
+git clone https://github.com/0xj4an/zkVVM.git
+cd zkVVM
+git checkout feat/evvm-integration
+bun install
+
+# Install Fisher dependencies
+cd fisher && bun install && cd ..
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your keys
+```
+
+### Compile Circuits
+
+```bash
+cd packages/noir
+nargo compile
+cd ../..
+```
+
+### Compile Contracts
+
+```bash
+bunx hardhat compile --config hardhat.config.cts
+```
+
+### Run Development
+
+```bash
+# Terminal 1: Start Fisher relayer
+bun run start:fisher
+
+# Terminal 2: Start frontend
+cd packages/vite && bun run dev
+
+# Open http://localhost:5173
+```
 
 ## Architecture
 
 ```text
 zkVVM/
 ├── packages/
-│   ├── contracts/                # Solidity smart contracts
-│   │   ├── ShieldedPool.sol      # Core privacy pool (deposit, transfer, withdraw)
+│   ├── contracts/                # Solidity smart contracts (EVVM Services)
+│   │   ├── zkVVM.sol             # Main contract - inherits EvvmService
 │   │   ├── IVerifier.sol         # Proof verification interface
-│   │   ├── UltraVerifier.sol     # Auto-generated UltraPlonk verifier
-│   │   ├── MockERC20.sol         # Test token
-│   │   └── MockVerifier.sol      # Test verifier stub
+│   │   ├── UltraVerifier.sol     # UltraPlonk verifier (production)
+│   │   └── MockVerifier.sol      # Mock verifier (development only)
 │   │
-│   ├── noir/                     # Noir ZK circuits
+│   ├── noir/                     # Noir ZK circuits (beta.18)
 │   │   ├── src/
-│   │   │   ├── main.nr           # Transfer/intent circuit
-│   │   │   ├── withdraw.nr       # Withdrawal circuit
-│   │   │   ├── nullifier_helper.nr
-│   │   │   └── root_helper.nr
-│   │   ├── scripts/              # Deposit, compute, and compile scripts
-│   │   └── libs/                 # Poseidon, Edwards, Merkle tree libraries
+│   │   │   ├── main.nr           # Withdraw circuit (main)
+│   │   │   ├── withdraw.nr       # Withdrawal with Merkle proof
+│   │   │   ├── note_generator.nr # Bearer token generation
+│   │   │   ├── split.nr          # Split 1 note into 4 notes
+│   │   │   └── simple.nr         # Testing circuit
+│   │   └── target/
+│   │       └── noirstarter.json  # Compiled withdraw circuit
 │   │
-│   └── vite/                     # React frontend
-│       ├── components/           # Deposit UI
-│       └── hooks/                # Proof generation & verification hooks
+│   └── vite/                     # React frontend (Vite + Wagmi)
+│       ├── pages/
+│       │   ├── DashboardPage.tsx # Deposit UI
+│       │   ├── WithdrawPage.tsx  # Withdraw UI
+│       │   └── LandingPage.tsx   # Marketing page
+│       ├── lib/
+│       │   ├── hooks/
+│       │   │   ├── useEvvm.ts    # EVVM signer integration
+│       │   │   └── useZK.ts      # ZK proof generation
+│       │   └── services/
+│       │       ├── zkVVM.ts      # SignedAction builder
+│       │       └── ZKService.ts  # Noir circuit executor
+│       └── components/           # UI components
 │
-├── tests/                        # Integration & proving system tests
+├── fisher/                       # Fisher relayer (HTTP server)
+│   └── index.ts                  # Executes SignedActions on-chain
+│
+├── scripts/                      # Deployment scripts
+│   ├── deploy-zkvvm.js
+│   ├── deploy-ultra-verifier.js
+│   └── check-env.ts              # Environment validation
+│
+├── deployments/
+│   └── sepolia_evvm/
+│       └── addresses.json        # Deployed contract addresses
+│
+├── docs/                         # Documentation
+│   ├── COMPARISON.md             # Main vs EVVM-Integration comparison
+│   ├── PRODUCTION_GAPS.md        # Production readiness checklist
+│   └── ZK_FLOW.md                # Bearer note cryptography
+│
+└── tests/                        # Integration tests
 ├── hardhat.config.cts            # Contract deployment & network config
 └── package.json                  # Monorepo workspace root
 ```
