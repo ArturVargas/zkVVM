@@ -19,14 +19,23 @@ export function DashboardPage() {
     const [payTxHash, setPayTxHash] = useState<string | null>(null);
     const [depositTxHash, setDepositTxHash] = useState<string | null>(null);
     const [isExecutingDeposit, setIsExecutingDeposit] = useState(false);
-    const { mintBearerToken, getStoredNotes, copyNote, isInitializing, getOnchainStatus } = useZK();
-    const { publicClient, signer, address: userAddress } = useEvvm();
-
-    const [onchainStatus, setOnchainStatus] = useState<Record<string, any>>({});
+    const [pendingNoteStr, setPendingNoteStr] = useState<string | null>(null);
+    const { mintBearerToken, getStoredNotes, copyNote, isInitializing } = useZK();
+    const { signer, address: userAddress } = useEvvm();
+    const [noteStatuses, setNoteStatuses] = useState<Record<string, 'draft' | 'onchain'>>({});
 
     useEffect(() => {
         setNotes(getStoredNotes());
     }, [getStoredNotes]);
+
+    useEffect(() => {
+        try {
+            const stored = JSON.parse(localStorage.getItem('zk-note-status') || '{}');
+            setNoteStatuses(stored);
+        } catch {
+            setNoteStatuses({});
+        }
+    }, []);
 
     const handleMint = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -36,6 +45,7 @@ export function DashboardPage() {
             setPayTxHash(null);
             setDepositTxHash(null);
             setDepositAction(null);
+            setPendingNoteStr(stored.noteStr);
 
             // If we have an EVVM signer, build pay + deposit SignedActions and log them.
             if (!signer) {
@@ -132,7 +142,14 @@ export function DashboardPage() {
         try {
             setIsExecutingDeposit(true);
             const hash = await executeWithFisher(depositAction);
-            if (hash) setDepositTxHash(hash);
+            if (hash) {
+                setDepositTxHash(hash);
+                if (pendingNoteStr) {
+                    const next = { ...noteStatuses, [pendingNoteStr]: 'onchain' as const };
+                    setNoteStatuses(next);
+                    localStorage.setItem('zk-note-status', JSON.stringify(next));
+                }
+            }
         } catch (err) {
             console.error('Failed to execute deposit via fisher:', err);
         } finally {
@@ -224,23 +241,19 @@ export function DashboardPage() {
                             notes.map((note, i) => (
                                 <div className="table-row" key={i}>
                                     <div className="text-secondary">{note.date}</div>
-                                    <div><strong>{note.amount}</strong> <span className="text-secondary">USDC</span></div>
+                                    <div>
+                                        <strong>{note.amount}</strong> <span className="text-secondary">USDC</span>
+                                        {noteStatuses[note.noteStr] === 'onchain'
+                                            ? <span className="status-badge status-onchain">ONCHAIN</span>
+                                            : <span className="status-badge status-draft">DRAFT</span>}
+                                    </div>
                                     <div className="align-right">
                                         <button
                                             className="btn-icon copy-btn"
                                             onClick={() => handleCopy(note.noteStr)}
                                         >
-                                            &#128190; COPY KEY
+                                            <span className="copy-icon">⧉</span> COPY KEY
                                         </button>
-                                        {onchainStatus[note.noteStr] && (
-                                            <div className="status-inline">
-                                                {onchainStatus[note.noteStr].loading && <span>Checking...</span>}
-                                                {onchainStatus[note.noteStr].error && <span className="text-danger">Error</span>}
-                                                {onchainStatus[note.noteStr].result && (
-                                                    <span className="text-success">{onchainStatus[note.noteStr].result.committed ? 'COMMITTED' : 'NOT ON CHAIN'}{onchainStatus[note.noteStr].result.nullifierUsed ? ' • SPENT' : ''}</span>
-                                                )}
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             ))
