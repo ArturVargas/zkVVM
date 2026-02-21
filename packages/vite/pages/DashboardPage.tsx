@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { WalletGuard } from '../components/WalletGuard.js';
 import { useDeposit } from '../hooks/useDeposit.js';
-import { generateNote, saveNote, loadNote, NoteData } from '../lib/note.js';
-import { parseUsdcAmount, formatUsdcAmount } from '../lib/usdc.js';
+import { generateNote, saveNote, loadNote, markNoteClaimed, NoteData } from '../lib/note.js';
+import { parseUsdcAmount } from '../lib/usdc.js';
 import { toast } from 'react-toastify';
 import './DashboardPage.css';
 
@@ -12,9 +12,11 @@ export function DashboardPage() {
         address: walletAddress,
         deposit,
         registerRoot,
+        isNullifierSpent,
         isPending,
         isSuccess,
         error,
+        txHash,
         poolAddress,
     } = useDeposit();
 
@@ -22,28 +24,62 @@ export function DashboardPage() {
     const [isGeneratingNote, setIsGeneratingNote] = useState(false);
     const pendingRootRef = useRef<`0x${string}` | null>(null);
     const [savedNote, setSavedNote] = useState<NoteData | null>(null);
+    // Track which phase we're in: 'deposit' | 'root' | null
+    const txPhaseRef = useRef<'deposit' | 'root' | null>(null);
 
-    // Load saved note on mount
+    // Load saved note on mount and when tab regains focus
     useEffect(() => {
         setSavedNote(loadNote());
+        const onFocus = () => setSavedNote(loadNote());
+        window.addEventListener('focus', onFocus);
+        return () => window.removeEventListener('focus', onFocus);
     }, []);
 
-    // Toast feedback
+    // Auto-detect on-chain claimed status for notes missing the flag
     useEffect(() => {
-        if (isSuccess) toast.success('Transaction confirmed');
-    }, [isSuccess]);
+        if (!savedNote || savedNote.claimed) return;
+        isNullifierSpent(savedNote.nullifier as `0x${string}`).then((spent) => {
+            if (spent) {
+                markNoteClaimed('unknown');
+                setSavedNote({ ...savedNote, claimed: true });
+            }
+        });
+    }, [savedNote?.nullifier, isNullifierSpent]);
+
     useEffect(() => {
         if (error) toast.error(error.message);
     }, [error]);
 
-    // Auto register root after successful deposit
+    // Handle tx success: show contextual toast with Etherscan link, then auto-register root
     useEffect(() => {
-        if (!isSuccess || !pendingRootRef.current) return;
-        const root = pendingRootRef.current;
-        pendingRootRef.current = null;
-        toast.info('Registering Merkle root...');
-        registerRoot(root);
-    }, [isSuccess, registerRoot]);
+        if (!isSuccess || !txHash) return;
+        const explorerUrl = `https://sepolia.etherscan.io/tx/${txHash}`;
+        const link = (
+            <a href={explorerUrl} target="_blank" rel="noopener" style={{ color: 'var(--accent-color)', textDecoration: 'underline' }}>
+                View transaction
+            </a>
+        );
+
+        if (txPhaseRef.current === 'deposit' && pendingRootRef.current) {
+            // Deposit confirmed, now register root
+            toast.success(
+                <span>Deposit confirmed! {link}</span>,
+                { autoClose: false },
+            );
+            const root = pendingRootRef.current;
+            pendingRootRef.current = null;
+            txPhaseRef.current = 'root';
+            toast.info('Registering Merkle root...');
+            registerRoot(root);
+        } else if (txPhaseRef.current === 'root') {
+            // Root registration confirmed — full flow done
+            toast.success(
+                <span>Merkle root registered! Note is ready. {link}</span>,
+                { autoClose: false },
+            );
+            txPhaseRef.current = null;
+        }
+    }, [isSuccess, txHash, registerRoot]);
 
     const handleMint = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -67,6 +103,7 @@ export function DashboardPage() {
             saveNote(note);
             setSavedNote(note);
             pendingRootRef.current = rootHex;
+            txPhaseRef.current = 'deposit';
             deposit(commitmentHex, value);
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'Failed to generate note');
@@ -88,8 +125,6 @@ export function DashboardPage() {
         : isPending
             ? 'Confirming...'
             : 'MINT BEARER NOTE';
-
-    const rawUnits = parseUsdcAmount(amount);
 
     return (
         <div className="dashboard-container page-container">
@@ -134,11 +169,6 @@ export function DashboardPage() {
                                             onChange={(e) => setAmount(e.target.value)}
                                             placeholder="10.25"
                                         />
-                                        {rawUnits !== null && rawUnits > 0n && (
-                                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                                                {rawUnits.toLocaleString()} raw units
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 
@@ -161,7 +191,7 @@ export function DashboardPage() {
                             <div className="vault-table glass-panel">
                                 <div className="table-row table-header">
                                     <div>DATE</div>
-                                    <div>VALUE</div>
+                                    <div>STATUS</div>
                                     <div className="align-right">SECRET CODE</div>
                                 </div>
                                 {savedNote ? (
@@ -170,13 +200,34 @@ export function DashboardPage() {
                                             {new Date(Number(savedNote.random)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                         </div>
                                         <div>
-                                            <strong>{formatUsdcAmount(BigInt(savedNote.value))}</strong>{' '}
-                                            <span className="text-secondary">USDC</span>
+                                            {savedNote.claimed ? (
+                                                <>
+                                                    <span style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>&#9679;</span>{' '}
+                                                    <span className="text-secondary">Redeemed</span>
+                                                    {savedNote.claimedTxHash && (
+                                                        <a
+                                                            href={`https://sepolia.etherscan.io/tx/${savedNote.claimedTxHash}`}
+                                                            target="_blank"
+                                                            rel="noopener"
+                                                            style={{ color: 'var(--accent-color)', fontSize: '11px', marginLeft: '8px', textDecoration: 'underline' }}
+                                                        >
+                                                            View tx
+                                                        </a>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span style={{ color: 'var(--accent-color)' }}>&#9679;</span>{' '}
+                                                    <span className="text-secondary">Shielded note active</span>
+                                                </>
+                                            )}
                                         </div>
                                         <div className="align-right">
-                                            <button className="btn-icon copy-btn" onClick={handleCopyNote}>
-                                                &#128190; COPY KEY
-                                            </button>
+                                            {!savedNote.claimed && (
+                                                <button className="btn-icon copy-btn" onClick={handleCopyNote}>
+                                                    &#128190; COPY KEY
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ) : (

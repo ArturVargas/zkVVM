@@ -43,6 +43,13 @@ const SHIELDED_POOL_ABI = [
     ],
     outputs: [],
   },
+  {
+    type: 'function',
+    name: 'nullifiers',
+    stateMutability: 'view',
+    inputs: [{ name: '', type: 'bytes32' }],
+    outputs: [{ name: '', type: 'bool' }],
+  },
 ] as const;
 
 const env = (import.meta as unknown as { env: Record<string, string | undefined> }).env;
@@ -69,6 +76,7 @@ export function useDeposit() {
   const [isPending, setIsPending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
 
   const sendTx = useCallback(
     async (fn: () => Promise<`0x${string}`>) => {
@@ -79,12 +87,9 @@ export function useDeposit() {
       setIsPending(true);
       setIsSuccess(false);
       setError(null);
+      setTxHash(null);
       try {
         const hash = await fn();
-        const explorerUrl = `https://sepolia.etherscan.io/tx/${hash}`;
-        toast.info(
-          <span>Tx sent. <a href={explorerUrl} target="_blank" rel="noopener">View on Etherscan</a></span>,
-        );
         const receipt = await publicClient.waitForTransactionReceipt({
           hash,
           timeout: 120_000,
@@ -92,6 +97,7 @@ export function useDeposit() {
         if (receipt.status === 'reverted') {
           throw new Error(`Transaction reverted (${hash})`);
         }
+        setTxHash(hash);
         setIsSuccess(true);
         return hash;
       } catch (err) {
@@ -165,6 +171,23 @@ export function useDeposit() {
     [sendTx],
   );
 
+  const isNullifierSpent = useCallback(
+    async (nullifier: `0x${string}`): Promise<boolean> => {
+      if (!poolAddress) return false;
+      try {
+        return (await publicClient.readContract({
+          address: poolAddress,
+          abi: SHIELDED_POOL_ABI,
+          functionName: 'nullifiers',
+          args: [nullifier],
+        })) as boolean;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
   return {
     isConnected: !!account,
     address: account?.address,
@@ -172,9 +195,11 @@ export function useDeposit() {
     registerRoot,
     withdraw,
     withdrawV2b,
+    isNullifierSpent,
     isPending,
     isSuccess,
     error,
+    txHash,
     poolAddress,
   };
 }
