@@ -1,0 +1,32 @@
+18eecb7 feat: working with mock
+ed358fb feat: working with mockverifier
+915bdee fix: deposit flow
+6085fde feat: deployments
+984d7f1 feat: env
+26ece4b feat: notes states
+f72efe5 feat: fisher impl
+57bf4cb feat: fisher
+016148a feat: deploy scripts
+604fbcb feat: removed onchain-status for notes
+81977e8 feat(withdraw): ciphertext and further test suite improvs
+898ee20 feat(zk): robust tests added
+f84e97d feat(withdraw): signed action and proof generated offchain
+aeb1674 fix: different nonces for each signature at deposit
+a38044d feat: deposit evvm signatures with proper zk commitment calculation
+ed72358 feat: MockVerifier.sol
+514d0b7 feat: offchain withdraw logic done
+827034f feat: useZK, deposit flow offchain done
+670d91b feat: pk_b threated as an arbitrary secret instead of recipient now
+6dea337 feat: tests fixed
+7b5ca7a feat: removed token selection from deposit component
+8147b60 feat(circuits): merge circuits from main (no tracked on git)
+4644386 feat: noir mods (not working, stashed)
+10f79aa feat(circuits): updated circuits, apis and tests to match the new ZK_FLOW.md
+3280018 feat: tests for zk circuits and interfaces
+dbe8fe3 feat(vite): ZKService API
+9495158 feat: zkVVM.sol and IVerifier.sol restored
+f50951b feat(vite): wallet connection component
+65c53a1 feat: ui details
+1790c77 feat: frontend visuals
+7684893 feat(vite): basic styles and pages (replicated from original frontend)
+e0fe0fc feat: cleaned up the repo, ready to be worked on
