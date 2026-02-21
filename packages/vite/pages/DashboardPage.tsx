@@ -3,12 +3,11 @@ import { WalletGuard } from '../components/WalletGuard.js';
 import './DashboardPage.css';
 
 export function DashboardPage() {
-    const [asset, setAsset] = useState('MATE');
     const [amount, setAmount] = useState('100.00');
 
     const handleMint = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Minting', amount, asset);
+        console.log('Minting', amount);
     };
 
     return (
@@ -25,15 +24,6 @@ export function DashboardPage() {
 
                     <form className="deposit-form" onSubmit={handleMint}>
                         <div className="form-group-row">
-                            <div className="input-group">
-                                <label>ASSET</label>
-                                <input
-                                    type="text"
-                                    className="input-field"
-                                    value={asset}
-                                    onChange={(e) => setAsset(e.target.value)}
-                                />
-                            </div>
                             <div className="input-group">
                                 <label>AMOUNT</label>
                                 <input
