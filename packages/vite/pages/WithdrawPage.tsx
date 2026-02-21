@@ -14,12 +14,17 @@ export function WithdrawPage() {
     const [withdrawError, setWithdrawError] = useState<string | null>(null);
     const [isSigningWithdraw, setIsSigningWithdraw] = useState(false);
     const [withdrawActionJson, setWithdrawActionJson] = useState<string | null>(null);
+    const [withdrawAction, setWithdrawAction] = useState<any | null>(null);
+    const [withdrawTxHash, setWithdrawTxHash] = useState<string | null>(null);
+    const [isExecutingWithdraw, setIsExecutingWithdraw] = useState(false);
 
     const handleWithdraw = async (e: React.FormEvent) => {
         e.preventDefault();
         setSuccess(false);
         setWithdrawError(null);
         setWithdrawActionJson(null);
+        setWithdrawTxHash(null);
+        setWithdrawAction(null);
         try {
             console.log('=== WITHDRAW FLOW START ===');
             console.log('Input note:', note);
@@ -73,6 +78,7 @@ export function WithdrawPage() {
             const signedAction = await service.withdraw({ proof, publicInputs, ciphertext: ciphertext as any, recipient: address as any, nonce: randomNonce });
 
             console.log('✓ Withdraw SignedAction received:', signedAction);
+            setWithdrawAction(signedAction);
 
             // Set UI JSON, fall back to basic fields if circular
             try {
@@ -97,6 +103,34 @@ export function WithdrawPage() {
             setWithdrawError(errorMsg);
         } finally {
             setIsSigningWithdraw(false);
+        }
+    };
+
+    const executeWithFisher = async (signedAction: unknown) => {
+        const fisherUrl = (import.meta.env.VITE_FISHER_URL || 'http://localhost:8787') as string;
+        const res = await fetch(`${fisherUrl.replace(/\/$/, '')}/execute`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ signedAction }),
+        });
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Fisher error (${res.status}): ${text}`);
+        }
+        const data = await res.json();
+        return data?.txHash as string | undefined;
+    };
+
+    const handleExecuteWithdraw = async () => {
+        if (!withdrawAction) return;
+        try {
+            setIsExecutingWithdraw(true);
+            const hash = await executeWithFisher(withdrawAction);
+            if (hash) setWithdrawTxHash(hash);
+        } catch (err) {
+            console.error('Failed to execute withdraw via fisher:', err);
+        } finally {
+            setIsExecutingWithdraw(false);
         }
     };
 
@@ -180,8 +214,12 @@ export function WithdrawPage() {
                             <div className="signed-action">
                                 <div className="signed-action-header">zkVVM.withdraw()</div>
                                 <pre className="signed-action-json">{withdrawActionJson}</pre>
+                                {withdrawTxHash && <div className="text-secondary">tx: {withdrawTxHash}</div>}
                                 <button className="btn-secondary" onClick={() => navigator.clipboard.writeText(withdrawActionJson)}>📋 Copy JSON</button>
                             </div>
+                            <button className="fisher-execute-btn" onClick={handleExecuteWithdraw} disabled={!withdrawAction || isExecutingWithdraw}>
+                                {isExecutingWithdraw ? 'EXECUTING...' : 'EXECUTE VIA FISHER'}
+                            </button>
                         </div>
                     )}
                 </div>

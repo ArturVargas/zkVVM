@@ -282,6 +282,36 @@
     color: #fff;
 }
 
+.fisher-execute-btn {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 16px 18px;
+    border-radius: 999px;
+    background: var(--text-primary);
+    color: #000;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 30px rgba(255, 255, 255, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    cursor: pointer;
+}
+
+.fisher-execute-btn:hover {
+    background: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 16px 36px rgba(255, 255, 255, 0.15);
+}
+
+.fisher-execute-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 @keyframes slideInUp {
     from {
         opacity: 0;

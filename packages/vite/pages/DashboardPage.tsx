@@ -15,6 +15,10 @@ export function DashboardPage() {
     const [showToast, setShowToast] = useState(false);
     const [payActionJson, setPayActionJson] = useState<string | null>(null);
     const [depositActionJson, setDepositActionJson] = useState<string | null>(null);
+    const [depositAction, setDepositAction] = useState<any | null>(null);
+    const [payTxHash, setPayTxHash] = useState<string | null>(null);
+    const [depositTxHash, setDepositTxHash] = useState<string | null>(null);
+    const [isExecutingDeposit, setIsExecutingDeposit] = useState(false);
     const { mintBearerToken, getStoredNotes, copyNote, isInitializing, getOnchainStatus } = useZK();
     const { publicClient, signer, address: userAddress } = useEvvm();
 
@@ -29,6 +33,9 @@ export function DashboardPage() {
         try {
             const stored = await mintBearerToken(amount);
             setNotes(getStoredNotes());
+            setPayTxHash(null);
+            setDepositTxHash(null);
+            setDepositAction(null);
 
             // If we have an EVVM signer, build pay + deposit SignedActions and log them.
             if (!signer) {
@@ -87,6 +94,7 @@ export function DashboardPage() {
 
             console.log('Pay SignedAction:', payAction);
             console.log('Deposit SignedAction:', depositAction);
+            setDepositAction(depositAction);
 
             // Set UI JSON, fall back to basic fields if circular
             try {
@@ -101,6 +109,34 @@ export function DashboardPage() {
             }
         } catch (err) {
             console.error('Failed to mint:', err);
+        }
+    };
+
+    const executeWithFisher = async (signedAction: unknown) => {
+        const fisherUrl = (import.meta.env.VITE_FISHER_URL || 'http://localhost:8787') as string;
+        const res = await fetch(`${fisherUrl.replace(/\/$/, '')}/execute`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ signedAction }),
+        });
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Fisher error (${res.status}): ${text}`);
+        }
+        const data = await res.json();
+        return data?.txHash as string | undefined;
+    };
+
+    const handleExecuteDeposit = async () => {
+        if (!depositAction) return;
+        try {
+            setIsExecutingDeposit(true);
+            const hash = await executeWithFisher(depositAction);
+            if (hash) setDepositTxHash(hash);
+        } catch (err) {
+            console.error('Failed to execute deposit via fisher:', err);
+        } finally {
+            setIsExecutingDeposit(false);
         }
     };
 
@@ -150,13 +186,18 @@ export function DashboardPage() {
                             <div className="signed-action">
                                 <div className="signed-action-header">core.pay()</div>
                                 <pre className="signed-action-json">{payActionJson}</pre>
+                                {payTxHash && <div className="text-secondary">tx: {payTxHash}</div>}
                                 <button className="btn-secondary" onClick={() => navigator.clipboard.writeText(payActionJson)}>📋 Copy JSON</button>
                             </div>
                             <div className="signed-action">
                                 <div className="signed-action-header">zkVVM.deposit()</div>
                                 <pre className="signed-action-json">{depositActionJson}</pre>
+                                {depositTxHash && <div className="text-secondary">tx: {depositTxHash}</div>}
                                 <button className="btn-secondary" onClick={() => navigator.clipboard.writeText(depositActionJson)}>📋 Copy JSON</button>
                             </div>
+                            <button className="fisher-execute-btn" onClick={handleExecuteDeposit} disabled={!depositAction || isExecutingDeposit}>
+                                {isExecutingDeposit ? 'EXECUTING...' : 'EXECUTE VIA FISHER'}
+                            </button>
                         </div>
                     )}
                 </div>
