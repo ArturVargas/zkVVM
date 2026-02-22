@@ -58,5 +58,4 @@ artifacts
 
 noir/target/
 dist
-deployment.json
 bun.lockb
