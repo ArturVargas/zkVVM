@@ -53,7 +53,7 @@ packages/contracts-backup/
 # other
 .vscode
 .DS_Store
-artifacts
+/artifacts
 .yarn/
 
 dist
