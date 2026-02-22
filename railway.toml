@@ -1,4 +1,5 @@
 [build]
+buildCommand = "bun install"
 
 [deploy]
 startCommand = "bun run start:fisher"
