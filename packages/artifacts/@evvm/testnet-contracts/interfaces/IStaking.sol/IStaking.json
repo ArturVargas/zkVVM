@@ -1,0 +1,926 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IStaking",
+  "sourceName": "@evvm/testnet-contracts/interfaces/IStaking.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "AddressIsNotAService",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "AddressMismatch",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "AddressMustWaitToFullUnstake",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "AddressMustWaitToStakeAgain",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "LimitPresaleStakersExceeded",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PresaleStakingDisabled",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "PublicStakingDisabled",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "SenderIsNotAdmin",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "SenderIsNotGoldenFisher",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "SenderIsNotProposedAdmin",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "requiredAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "ServiceDoesNotFulfillCorrectStakingAmount",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ServiceDoesNotStakeInSameTx",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TimeToAcceptProposalNotReached",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "UserIsNotPresaleStaker",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "UserPresaleStakerLimitExceeded",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "acceptNewAdmin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "acceptNewEstimator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "acceptNewGoldenFisher",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "acceptSetSecondsToUnlockStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_staker",
+          "type": "address"
+        }
+      ],
+      "name": "addPresaleStaker",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "_stakers",
+          "type": "address[]"
+        }
+      ],
+      "name": "addPresaleStakers",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "cancelChangeAllowPresaleStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "cancelChangeAllowPublicStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "cancelSetSecondsToUnllockFullUnstaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "confirmChangeAllowPresaleStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "confirmChangeAllowPublicStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "confirmServiceStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "confirmSetSecondsToUnllockFullUnstaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "getAddressHistory",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "transactionType",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalStaked",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct StakingStructs.HistoryMetadata[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_index",
+          "type": "uint256"
+        }
+      ],
+      "name": "getAddressHistoryByIndex",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "transactionType",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalStaked",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct StakingStructs.HistoryMetadata",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAllowPresaleStaking",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bool",
+              "name": "flag",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timeToAccept",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct ProposalStructs.BoolTypeProposal",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAllowPublicStaking",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bool",
+              "name": "flag",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "timeToAccept",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct ProposalStructs.BoolTypeProposal",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getCoreAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getEstimatorAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getEstimatorProposal",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getEvvmID",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getGoldenFisher",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getGoldenFisherProposal",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        }
+      ],
+      "name": "getIfUsedAsyncNonce",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getMateAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getOwner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "getPresaleStaker",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPresaleStakerCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getSecondsToUnlockFullUnstaking",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getSecondsToUnlockStaking",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "getSizeOfAddressHistory",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "getTimeToUserUnlockFullUnstakingTime",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "getTimeToUserUnlockStakingTime",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "getUserAmountStaked",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        }
+      ],
+      "name": "gimmeYiel",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "epochAnswer",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenToBeRewarded",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountTotalToBeRewarded",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "idToOverwriteUserHistory",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "timestampToBeOverwritten",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "isStaking",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOfStaking",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signaturePay",
+          "type": "bytes"
+        }
+      ],
+      "name": "goldenStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_estimator",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_core",
+          "type": "address"
+        }
+      ],
+      "name": "initializeSystemContracts",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "prepareChangeAllowPresaleStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "prepareChangeAllowPublicStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOfStaking",
+          "type": "uint256"
+        }
+      ],
+      "name": "prepareServiceStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_secondsToUnllockFullUnstaking",
+          "type": "uint256"
+        }
+      ],
+      "name": "prepareSetSecondsToUnllockFullUnstaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "isStaking",
+          "type": "bool"
+        },
+        {
+          "internalType": "address",
+          "name": "originExecutor",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "priorityFeePay",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "noncePay",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signaturePay",
+          "type": "bytes"
+        }
+      ],
+      "name": "presaleStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "priceOfStaking",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_newAdmin",
+          "type": "address"
+        }
+      ],
+      "name": "proposeAdmin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_estimator",
+          "type": "address"
+        }
+      ],
+      "name": "proposeEstimator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_goldenFisher",
+          "type": "address"
+        }
+      ],
+      "name": "proposeGoldenFisher",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_secondsToUnlockStaking",
+          "type": "uint256"
+        }
+      ],
+      "name": "proposeSetSecondsToUnlockStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "isStaking",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOfStaking",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "originExecutor",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "priorityFeePay",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "noncePay",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signaturePay",
+          "type": "bytes"
+        }
+      ],
+      "name": "publicStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rejectProposalAdmin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rejectProposalEstimator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rejectProposalGoldenFisher",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rejectProposalSetSecondsToUnlockStaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOfStaking",
+          "type": "uint256"
+        }
+      ],
+      "name": "serviceUnstaking",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
