@@ -29,6 +29,13 @@ const config: HardhatUserConfig = {
           optimizer: { enabled: true, runs: 5000 },
         },
       },
+      'contracts/test/helpers/MockCore.sol': {
+        version: '0.8.28',
+        settings: {
+          viaIR: true,
+          optimizer: { enabled: true, runs: 200 },
+        },
+      },
     },
   },
   defaultNetwork: 'localhost',
